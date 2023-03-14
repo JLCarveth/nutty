@@ -1,4 +1,4 @@
-import { Route } from "./types.ts";
+import { Route, RouteHandler } from "./types.ts";
 
 const routes: Route[] = [];
 const DEBUG = Deno.env.get("DEBUG") ?? false;
@@ -31,11 +31,6 @@ async function serveHttp(conn: Deno.Conn) {
   }
 }
 
-type RouteHandler = (
-  req: Request,
-  path: URLPattern,
-  params?: Record<string, unknown>,
-) => Promise<Response>;
 
 export function get(path: string, handler: RouteHandler) {
   const urlPattern = new URLPattern({ pathname: path });
