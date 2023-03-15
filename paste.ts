@@ -37,8 +37,14 @@ post("/api/paste", async (req, _path, _params) => {
   return new Response(filename);
 });
 
-get("/api/:uuid", (req, _path, params) => {
+get("/api/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
+  try {
+    await Deno.lstat(`${TARGET_DIR}/${filename}`);
+  } catch (_err) {
+    // File doesn't exist
+    return new Response("File not found.", { status: 404 });
+  }
   return serveFile(req, TARGET_DIR + "/" + filename);
 });
 
