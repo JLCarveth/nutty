@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 0.1.0
+ * @version 0.2.0
  *
  * 2023-03-10
  */
