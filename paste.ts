@@ -5,6 +5,9 @@
  * @version 0.2.0
  *
  * 2023-03-10
+ * Provides basic authentication via /api/login and /api/register routes.
+ * Post a text file to /api/paste and a UUID is returned on success.
+ * GET /api/:uuid to retrieve that text file.
  */
 import { get, listen, post } from "./server.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
@@ -35,6 +38,7 @@ post("/api/login", async (req, _path, _params) => {
     return new Response(err.message, { status: 401 });
   }
 });
+
 /**
  * POST /register - Register for a new account with the given password.
  * A UUID is generated and returned upoon success, and is used to subsequently login.
@@ -80,6 +84,32 @@ post("/api/paste", async (req, _path, _params) => {
   return new Response(filename);
 });
 
+get("/api/paste", async (req, _path, _params) => {
+  const token = req.headers.get("X-Access-Token");
+  if (!token) {
+    return new Response(
+      "Missing or invalid secret key...",
+      {
+        status: 401,
+      },
+    );
+  }
+  let uuid = "";
+  try {
+    const payload = await verify(token);
+    uuid = payload.userid as string;
+  } catch (_err) {
+    return new Response("Could not verify token", { status: 401 });
+  }
+
+  const files = [];
+  for await (const filename of Deno.readDir(`${TARGET_DIR}/${uuid}`)) {
+    files.push(filename.name);
+  }
+  return new Response(JSON.stringify(files));
+});
+
+// Dynamic URLs have to be matched last
 get("/api/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
   const token = req.headers.get("X-Access-Token");
