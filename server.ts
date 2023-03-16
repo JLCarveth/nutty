@@ -15,7 +15,7 @@ async function serveHttp(conn: Deno.Conn) {
     /* Iterate through registered routes for a match */
     for (const route of routes) {
       if (route.action === method && route.path.test(path)) {
-        if (DEBUG) console.log(JSON.stringify({ action: method, path: path }));
+        console.log(route.path.pathname, path);
         const match = route.path.exec(requestEvent.request.url);
         const params = match?.pathname.groups;
         /* Pass off the request info, params to the registered handler */
@@ -25,12 +25,11 @@ async function serveHttp(conn: Deno.Conn) {
           params,
         );
         requestEvent.respondWith(response);
-        continue;
+        break;
       }
     }
   }
 }
-
 
 export function get(path: string, handler: RouteHandler) {
   const urlPattern = new URLPattern({ pathname: path });
