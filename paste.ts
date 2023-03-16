@@ -8,11 +8,45 @@
  */
 import { get, listen, post } from "./server.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
-
+import { SQLiteService as service, verifyToken } from "./auth.ts";
+const SQLiteService = service.getInstance();
 const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-const SECRET_KEY = Deno.env.get("SECRET_KEY") || "__NOKEY__";
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 
+/**
+ * POST /api/login
+ * Expects `uuid` and `password` fields in the post body.
+ * Returns a jsonwebtoken on success
+ */
+post("/api/login", async (req, _path, _params) => {
+  const body = await req.json();
+  const uuid = body.uuid;
+  const password = body.password;
+
+  if (!uuid || !password) {
+    return new Response("Invalid request. Missing parameters.", {
+      status: 400,
+    });
+  }
+  try {
+    const token = await SQLiteService.login(uuid, password);
+    return new Response(token);
+  } catch (err) {
+    return new Response(err.message, { status: 401 });
+  }
+});
+/**
+ * POST /register - Register for a new account with the given password.
+ * A UUID is generated and returned upoon success, and is used to subsequently login.
+ */
+post("/api/register", async (req, _path, _params) => {
+  const body = await req.json();
+  const password = body.password;
+
+  if (!password) return new Response("Missing parameters", { status: 400 });
+  const uuid = SQLiteService.register(password);
+  return new Response(uuid);
+});
 /**
  * POST /api/paste
  * Expects the SECRET_KEY to be provided via X-Access-Token header.
@@ -23,14 +57,15 @@ post("/api/paste", async (req, _path, _params) => {
   const filename = crypto.randomUUID();
   const token = req.headers.get("X-Access-Token");
   const text = await req.text();
-  if (!token || token !== SECRET_KEY) {
+  if (!token) {
     return new Response(
-      "Missing or invalid secret key..." + token,
+      "Missing or invalid secret key...",
       {
         status: 401,
       },
     );
   }
+
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
   await Deno.writeFile(`${TARGET_DIR}/${filename}`, data);
