@@ -8,7 +8,7 @@
  */
 import { get, listen, post } from "./server.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
-import { SQLiteService as service, verifyToken } from "./auth.ts";
+import { SQLiteService as service, verify } from "./auth.ts";
 const SQLiteService = service.getInstance();
 const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
@@ -20,7 +20,7 @@ const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
  */
 post("/api/login", async (req, _path, _params) => {
   const body = await req.json();
-  const uuid = body.uuid;
+  const uuid = body.userid;
   const password = body.password;
 
   if (!uuid || !password) {
@@ -47,6 +47,7 @@ post("/api/register", async (req, _path, _params) => {
   const uuid = SQLiteService.register(password);
   return new Response(uuid);
 });
+
 /**
  * POST /api/paste
  * Expects the SECRET_KEY to be provided via X-Access-Token header.
@@ -65,22 +66,38 @@ post("/api/paste", async (req, _path, _params) => {
       },
     );
   }
-
+  let uuid = "";
+  try {
+    const payload = await verify(token);
+    uuid = payload.userid as string;
+  } catch (_err) {
+    return new Response("Could not verify token", { status: 401 });
+  }
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
-  await Deno.writeFile(`${TARGET_DIR}/${filename}`, data);
+  await Deno.mkdir(`${TARGET_DIR}/${uuid}`, { recursive: true });
+  await Deno.writeFile(`${TARGET_DIR}/${uuid}/${filename}`, data);
   return new Response(filename);
 });
 
 get("/api/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
+  const token = req.headers.get("X-Access-Token");
+  let uuid = "";
+  if (!token) return new Response("Invalid or missing token");
   try {
-    await Deno.lstat(`${TARGET_DIR}/${filename}`);
+    const payload = await verify(token);
+    uuid = payload.userid as string;
+  } catch (_err) {
+    return new Response("Invalid or missing token.");
+  }
+  try {
+    await Deno.lstat(`${TARGET_DIR}/${uuid}/${filename}`);
   } catch (_err) {
     // File doesn't exist
     return new Response("File not found.", { status: 404 });
   }
-  return serveFile(req, TARGET_DIR + "/" + filename);
+  return serveFile(req, TARGET_DIR + "/" + uuid + "/" + filename);
 });
 
 listen(PORT);
