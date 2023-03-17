@@ -2,12 +2,13 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 0.3.0
+ * @version 0.3.1
  *
- * 2023-03-10
  * Provides basic authentication via /api/login and /api/register routes.
+ * Tokens are provided with the "X-Access-Token" header
  * Post a text file to /api/paste and a UUID is returned on success.
  * GET /api/:uuid to retrieve that text file.
+ * GET /api/paste to return the UUIDs of all stored pastes
  */
 import { get, listen, post } from "./server.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
@@ -15,6 +16,7 @@ import { SQLiteService as service, verify } from "./auth.ts";
 const SQLiteService = service.getInstance();
 const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
+const version = "0.3.1";
 
 /**
  * POST /api/login
@@ -107,6 +109,10 @@ get("/api/paste", async (req, _path, _params) => {
     files.push(filename.name);
   }
   return new Response(JSON.stringify(files));
+});
+
+get("/api/version", (_req, _path, _params) => {
+  return new Response(version);
 });
 
 // Dynamic URLs have to be matched last
