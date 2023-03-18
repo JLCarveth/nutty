@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 0.3.1
+ * @version 0.4.0
  *
  * Provides basic authentication via /api/login and /api/register routes.
  * Tokens are provided with the "X-Access-Token" header
@@ -17,7 +17,7 @@ const SQLiteService = service.getInstance();
 const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
-const version = "0.3.1";
+const version = "0.4.0";
 
 /**
  * POST /api/login
