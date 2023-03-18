@@ -16,6 +16,7 @@ import { SQLiteService as service, verify } from "./auth.ts";
 const SQLiteService = service.getInstance();
 const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
+const BASE_URL = Deno.env.get("BASE_URL");
 const version = "0.3.1";
 
 /**
@@ -115,11 +116,48 @@ get("/api/version", (_req, _path, _params) => {
   return new Response(version);
 });
 
+get("/api/share/:uuid", async (req, _path, params) => {
+  const uuid = params?.uuid;
+  const token = req.headers.get("X-Access-Token");
+  let userid = "";
+
+  if (!token) return new Response("Missing or invalid token.");
+  try {
+    const payload = await verify(token);
+    userid = payload.userid as string;
+  } catch (_err) {
+    return new Response("Missing or invalid token.");
+  }
+
+  // check if file exists
+  try {
+    await Deno.lstat(`${TARGET_DIR}/${userid}/${uuid}`);
+  } catch (_err) {
+    return new Response("File not found.");
+  }
+
+  //File exists, create symlink
+  await Deno.symlink(
+    `${TARGET_DIR}/${userid}/${uuid}`,
+    `${TARGET_DIR}/public/${uuid}`,
+  );
+  // Return https://api.jlcarveth.dev/api/:uuid
+  return new Response(`${BASE_URL}/${uuid}`);
+});
+
 // Dynamic URLs have to be matched last
 get("/api/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
   const token = req.headers.get("X-Access-Token");
   let uuid = "";
+  // Before checking token, look in TARGET_DIR/public for the uuid
+  try {
+    await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
+    // File does exist, return it.
+    return serveFile(req, TARGET_DIR + "/public/" + filename);
+  } catch (_err) {
+    // File not found in  public/, continue with authentication
+  }
   if (!token) return new Response("Invalid or missing token");
   try {
     const payload = await verify(token);

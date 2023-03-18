@@ -2,11 +2,10 @@ export type RouteHandler = (
   req: Request,
   path: URLPattern,
   params?: Record<string, unknown>,
-) => Promise<Response>;
+) => Promise<Response> | Response;
 
 export interface Route {
-    path : URLPattern,
-    action : string,
-    handler : RouteHandler
+  path: URLPattern;
+  action: string;
+  handler: RouteHandler;
 }
-
