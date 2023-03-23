@@ -10,7 +10,7 @@
  * GET /api/:uuid to retrieve that text file.
  * GET /api/paste to return the UUIDs of all stored pastes
  */
-import { get, listen, post } from "./server.ts";
+import { addRoute, get, listen, post } from "./server.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
 import { SQLiteService as service, verify } from "./auth.ts";
 const SQLiteService = service.getInstance();
@@ -44,7 +44,10 @@ post("/api/login", async (req, _path, _params) => {
 
 /**
  * POST /register - Register for a new account with the given password.
- * A UUID is generated and returned upoon success, and is used to subsequently login.
+ * A UUID is generated and returned upoon success, and is used to subsequently login
+ * with the password.
+ * @param password - will be used to login
+ * @returns a UUID to be used to login
  */
 post("/api/register", async (req, _path, _params) => {
   const body = await req.json();
@@ -59,7 +62,7 @@ post("/api/register", async (req, _path, _params) => {
  * POST /api/paste
  * Expects the SECRET_KEY to be provided via X-Access-Token header.
  * Creates a new file on the filesystem, writes the POST body to the file,
- * and returns a UUID filename on success.
+ * @returns a UUID filename on success.
  */
 post("/api/paste", async (req, _path, _params) => {
   const filename = crypto.randomUUID();
@@ -87,6 +90,9 @@ post("/api/paste", async (req, _path, _params) => {
   return new Response(filename);
 });
 
+/**
+ * @returns all pastes the user has stored as an array of UUIDs
+ */
 get("/api/paste", async (req, _path, _params) => {
   const token = req.headers.get("X-Access-Token");
   if (!token) {
@@ -112,10 +118,19 @@ get("/api/paste", async (req, _path, _params) => {
   return new Response(JSON.stringify(files));
 });
 
+/**
+ * @returns the current version of the API
+ */
 get("/api/version", (_req, _path, _params) => {
   return new Response(version);
 });
 
+/**
+ * Symlinks a paste to the public folder, allowing it to be accessed by anyone
+ * without a login token.
+ * @param uuid - the uuid of the paste to make public
+ * @returns a URL that points to the public paste
+ */
 get("/api/share/:uuid", async (req, _path, params) => {
   const uuid = params?.uuid;
   const token = req.headers.get("X-Access-Token");
@@ -172,6 +187,35 @@ get("/api/:uuid", async (req, _path, params) => {
     return new Response("File not found.", { status: 404 });
   }
   return serveFile(req, TARGET_DIR + "/" + uuid + "/" + filename);
+});
+
+addRoute("/api/:uuid", "DELETE", async (req, _path, params) => {
+  const token = req.headers.get("X-Access-Token");
+  if (!token) return new Response("Invalid or missing token");
+  let userID = "";
+  try {
+    const payload = await verify(token);
+    userID = payload.userid as string;
+  } catch (_err) {
+    return new Response("Invalid or missing token");
+  }
+
+  const uuid = params?.uuid;
+  // Try to remove public/uuid if it exists
+  try {
+    await Deno.remove(`${TARGET_DIR}/public/${uuid}`);
+  } catch (_err) {
+    // Do nothing, symlink not found
+  }
+  try {
+    await Deno.remove(`${TARGET_DIR}/${userID}/${uuid}`);
+  } catch (err) {
+    if (err instanceof Deno.errors.NotFound) {
+      return new Response("File not found.");
+    }
+    return new Response("An unexpected error has occurred.", { status: 500 });
+  }
+  return new Response("OK");
 });
 
 listen(PORT);

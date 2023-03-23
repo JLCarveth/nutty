@@ -46,6 +46,7 @@ export function addRoute(path: string, action: string, handler: RouteHandler) {
   const urlPattern = new URLPattern({ pathname: path });
   routes.push({ path: urlPattern, action: action, handler: handler });
 }
+
 /**
  * Call this function to start the server.
  * @param port The port the server will listen to
