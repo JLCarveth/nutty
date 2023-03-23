@@ -17,7 +17,7 @@ const SQLiteService = service.getInstance();
 const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
-const version = "0.4.0";
+const version = "0.5.0";
 
 /**
  * POST /api/login
