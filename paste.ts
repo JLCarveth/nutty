@@ -3,6 +3,7 @@
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
  * @version 0.4.0
+ * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
  * Tokens are provided with the "X-Access-Token" header
@@ -20,9 +21,13 @@ const BASE_URL = Deno.env.get("BASE_URL");
 const version = "0.5.0";
 
 /**
- * POST /api/login
- * Expects `uuid` and `password` fields in the post body.
- * Returns a jsonwebtoken on success
+ * Authenticate with the API to recieve an access token
+ * @function
+ * @name POST-/api/login
+ * @memberof nutty
+ * @param {string} uuid - the UUID that was obtained through registration
+ * @param {string} password - the valid password for the account
+ * @returns {string} a jsonwebtoken on success
  */
 post("/api/login", async (req, _path, _params) => {
   const body = await req.json();
@@ -43,11 +48,12 @@ post("/api/login", async (req, _path, _params) => {
 });
 
 /**
- * POST /register - Register for a new account with the given password.
- * A UUID is generated and returned upoon success, and is used to subsequently login
- * with the password.
- * @param password - will be used to login
- * @returns a UUID to be used to login
+ * Registers a new account
+ * @function
+ * @name POST-/api/regiser
+ * @memberof nutty
+ * @param {string} password - the valid password for the account
+ * @returns {string} a UUID
  */
 post("/api/register", async (req, _path, _params) => {
   const body = await req.json();
@@ -59,10 +65,13 @@ post("/api/register", async (req, _path, _params) => {
 });
 
 /**
- * POST /api/paste
- * Expects the SECRET_KEY to be provided via X-Access-Token header.
- * Creates a new file on the filesystem, writes the POST body to the file,
- * @returns a UUID filename on success.
+ * Stores the provided text file on the filesystem, and returns a UUID to the client
+ * for later access.
+ * @function
+ * @name POST-/api/paste
+ * @memberof nutty
+ * @param {string} text - the text content to be stored
+ * @returns {string} a UUID identifying the new paste
  */
 post("/api/paste", async (req, _path, _params) => {
   const filename = crypto.randomUUID();
@@ -91,7 +100,11 @@ post("/api/paste", async (req, _path, _params) => {
 });
 
 /**
- * @returns all pastes the user has stored as an array of UUIDs
+ * Returns an array of UUIDs of all pastes belonging to the user
+ * @function
+ * @name GET-/api/paste
+ * @memberof nutty
+ * @returns {Array} an array of UUIDs associated to pastes
  */
 get("/api/paste", async (req, _path, _params) => {
   const token = req.headers.get("X-Access-Token");
@@ -119,7 +132,11 @@ get("/api/paste", async (req, _path, _params) => {
 });
 
 /**
- * @returns the current version of the API
+ * Returns the current version of Nutty
+ * @function
+ * @name GET-/api/version
+ * @memberof nutty
+ * @returns {string} the current version of Nutty
  */
 get("/api/version", (_req, _path, _params) => {
   return new Response(version);
@@ -128,8 +145,13 @@ get("/api/version", (_req, _path, _params) => {
 /**
  * Symlinks a paste to the public folder, allowing it to be accessed by anyone
  * without a login token.
- * @param uuid - the uuid of the paste to make public
- * @returns a URL that points to the public paste
+ * TODO: Is GET the best method for this route? PUT instead?
+ * TODO: What if paste is already public?
+ * @function
+ * @name GET-/api/share/:uuid
+ * @param {string} uuid - the uuid of the paste to be made public
+ * @memberof nutty
+ * @returns {string} the a URL pointing to the public paste
  */
 get("/api/share/:uuid", async (req, _path, params) => {
   const uuid = params?.uuid;
@@ -161,6 +183,14 @@ get("/api/share/:uuid", async (req, _path, params) => {
 });
 
 // Dynamic URLs have to be matched last
+/**
+ * Returns the paste with the given UUID, if the user has access/the paste is public.
+ * @function
+ * @name GET-/api/:uuid
+ * @param {string} uuid - the uuid of the paste to retrieve
+ * @memberof nutty
+ * @returns {string} the contents of the paste with given UUID
+ */
 get("/api/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
   const token = req.headers.get("X-Access-Token");
@@ -189,6 +219,14 @@ get("/api/:uuid", async (req, _path, params) => {
   return serveFile(req, TARGET_DIR + "/" + uuid + "/" + filename);
 });
 
+/**
+ * Removes the paste with the given UUID, if the user has access.
+ * @function
+ * @name DELETE-/api/:uuid
+ * @param {string} uuid - the uuid of the paste to remove
+ * @memberof nutty
+ * @returns {string} OK
+ */
 addRoute("/api/:uuid", "DELETE", async (req, _path, params) => {
   const token = req.headers.get("X-Access-Token");
   if (!token) return new Response("Invalid or missing token");
