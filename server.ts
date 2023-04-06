@@ -15,7 +15,6 @@ async function serveHttp(conn: Deno.Conn) {
     /* Iterate through registered routes for a match */
     for (const route of routes) {
       if (route.action === method && route.path.test(path)) {
-        console.log(route.path.pathname, path);
         const match = route.path.exec(requestEvent.request.url);
         const params = match?.pathname.groups;
         /* Pass off the request info, params to the registered handler */

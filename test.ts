@@ -7,6 +7,7 @@ async function testVersion() {
   const actualVersion = await response.text();
   return expectedVersion === actualVersion;
 }
+
 let testsPassed = true;
 const testResults = {
   "testVersion": await testVersion(),
