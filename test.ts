@@ -62,9 +62,43 @@ async function testRegister() {
   return registered.status === 200 && noParams.status === 400;
 }
 
+async function testLogin() {
+  // Test login with no params
+  const noParams = await fetch(`${baseURL}/api/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+
+  console.assert(
+    noParams.status === 400,
+    "Expected status to be 400, server returned %d",
+    noParams.status,
+  );
+
+  // Test login with invalid password
+  const invalid = await fetch(`${baseURL}/api/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ userid: testUser.uuid, password: "WRONGPASSWORD" }),
+  });
+
+  console.assert(
+    invalid.status === 401,
+    "Expected status to be 401, server returned %d",
+    invalid.status,
+  );
+  return noParams.status === 400 && invalid.status === 401;
+}
+
 const testResults = {
   "testVersion": await testVersion(),
   "testRegister": await testRegister(),
+  "testLogin": await testLogin(),
 };
 
 console.log(
@@ -75,6 +109,11 @@ console.log(
 console.log(
   "Running test testRegister: ",
   (testResults["testRegister"]) ? "Passed ✓" : "Failed ✗",
+);
+
+console.log(
+  "Running test testLogin: ",
+  (testResults["testLogin"]) ? "Passed ✓" : "Failed ✗",
 );
 
 Deno.exit(
