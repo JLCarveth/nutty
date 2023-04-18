@@ -43,4 +43,13 @@ Nutty depends on a couple of environment variables to be established before runn
 |`PORT`|The port to listen to. Default is 5335|`5335`|
 
 ## Usage
-
+There is a simple client bash script which provides a simple example of using Nutty.
+```
+export TOKEN=$(curl https://paste.jlcarveth.dev/api/login -X POST -H "Content-Type: application/json" -d '{"email":"jlcarveth@gmail.com","password":"notmypassword"}')
+export EMAIL="jlcarveth@gmail.com" # Email is used for signing PGP messages
+uuid=$(cat file.txt | bash client.sh)
+```
+If the client runs successfully, a UUID associated with the new paste is returned. This paste can then be retrieved with a simple GET request:
+```
+curl $API_URL/$UUID -H "X-Access-Token: $TOKEN"
+```
