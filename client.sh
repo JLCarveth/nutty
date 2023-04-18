@@ -4,7 +4,6 @@
 EMAIL=${EMAIL}
 TOKEN=${TOKEN}
 API_URL=${API_URL}
-RECIPIENT=${RECIPIENT}
 
 # Read piped input
 TEXT=$(cat)
