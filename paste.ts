@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 0.4.0
+ * @version 1.0.0
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -18,7 +18,7 @@ const SQLiteService = service.getInstance();
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
-export const version = "0.5.0";
+export const version = "1.0.0";
 
 /**
  * Authenticate with the API to recieve an access token
@@ -31,16 +31,16 @@ export const version = "0.5.0";
  */
 post("/api/login", async (req, _path, _params) => {
   const body = await req.json();
-  const uuid = body.userid;
+  const email = body.email;
   const password = body.password;
 
-  if (!uuid || !password) {
+  if (!email || !password) {
     return new Response("Invalid request. Missing parameters.", {
       status: 400,
     });
   }
   try {
-    const token = await SQLiteService.login(uuid, password);
+    const token = await SQLiteService.login(email, password);
     return new Response(token);
   } catch (err) {
     return new Response(err.message, { status: 401 });
@@ -57,10 +57,13 @@ post("/api/login", async (req, _path, _params) => {
  */
 post("/api/register", async (req, _path, _params) => {
   const body = await req.json();
+  const email = body.email;
   const password = body.password;
 
-  if (!password) return new Response("Missing parameters", { status: 400 });
-  const uuid = SQLiteService.register(password);
+  if (!email || !password) {
+    return new Response("Missing parameters", { status: 400 });
+  }
+  const uuid = SQLiteService.register(email, password);
   return new Response(uuid);
 });
 
