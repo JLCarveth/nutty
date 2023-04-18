@@ -2,7 +2,6 @@
  * Utility class for implementing authentication functionality
  */
 const SECRET_KEY = Deno.env.get("SECRET_KEY") || "__NOKEY__";
-const EXPIRY = Deno.env.get("TOKEN_EXP") || "1h";
 const KEY = await crypto.subtle.generateKey(
   {
     name: "HMAC",
@@ -23,7 +22,6 @@ export async function generateToken(payload: Record<string, unknown>) {
     console.error("No SECRET_KEY provided, please set SECRET_KEY in .env");
     Deno.exit(1);
   }
-
   return await create({ alg: "HS512", typ: "JWT" }, payload, KEY);
 }
 
@@ -62,6 +60,7 @@ const db = new Database(DB_NAME);
 
 interface User {
   userid: string;
+  email: string;
   password: string;
 }
 let instance: SQLiteService | null = null;
@@ -76,7 +75,10 @@ export class SQLiteService {
   constructor() {
     try {
       db.exec(
-        `CREATE TABLE IF NOT EXISTS users (userid text primary key not null, password text not null)`,
+        `CREATE TABLE IF NOT EXISTS users (\
+            userid text primary key not null,\
+            email text not null,\
+            password text not null)`,
       );
     } catch (err) {
       console.error("Error creating table", err);
@@ -88,9 +90,9 @@ export class SQLiteService {
    * Attempts to login with a given userid and password,
    * comparing to the hash:salt stored in the database.
    */
-  login(userid: string, password: string) {
-    const stmt = db.prepare("SELECT * FROM users WHERE userid = ?");
-    const user = stmt.get(userid);
+  login(email: string, password: string) {
+    const stmt = db.prepare("SELECT * FROM users WHERE email = ?");
+    const user = stmt.get(email) as User | undefined;
     if (!user) {
       throw new Error("Authentication Error");
     }
@@ -105,7 +107,8 @@ export class SQLiteService {
 
     const token = generateToken({
       //Payload
-      userid,
+      userid: user.userid,
+      email: user.email,
     });
 
     return token;
@@ -115,12 +118,13 @@ export class SQLiteService {
    * Registers a new user account. Generates a UUID to act as userid, and hashes the
    * required password.
    */
-  register(password: string) {
+  register(email: string, password: string) {
     const hashed = hash(password);
     try {
       const uuid = crypto.randomUUID();
-      db.exec("INSERT INTO users (userid, password) VALUES (?,?)", [
+      db.exec("INSERT INTO users (userid, email, password) VALUES (?,?,?)", [
         uuid,
+        email,
         hashed,
       ]);
       return uuid;
