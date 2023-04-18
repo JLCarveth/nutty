@@ -6,7 +6,7 @@ import "./paste.ts";
 import { PORT, version } from "./paste.ts";
 
 const baseURL = `http://localhost:${PORT}`;
-const testUser = { uuid: "", password: "password" };
+const testUser = { uuid: "", password: "password", email: "test@gmail.com" };
 
 function isValidUUID(uuid: string) {
   const regex = new RegExp(
@@ -46,6 +46,7 @@ async function testRegister() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      "email": testUser.email,
       "password": testUser.password,
     }),
   });
@@ -84,7 +85,7 @@ async function testLogin() {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ userid: testUser.uuid, password: "WRONGPASSWORD" }),
+    body: JSON.stringify({ email: testUser.email, password: "WRONGPASSWORD" }),
   });
 
   console.assert(
