@@ -12,6 +12,7 @@
  * GET /api/paste to return the UUIDs of all stored pastes
  */
 import { addRoute, get, listen, post } from "./server.ts";
+import { extname, resolve, SEP } from "https://deno.land/std@0.202.0/path/mod.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
 import { SQLiteService as service, verify } from "./auth.ts";
 const SQLiteService = service.getInstance();
@@ -47,15 +48,29 @@ get("/", serveIndex);
  */
 get("/css/*", async (_req, _path, params) => {
   if (!params) return new Response("Bad Request", { status: 400 });
+
+  const filepath = `static/css/${params[0]}`;
+  const resolvedPath = resolve(Deno.cwd(), filepath);
+
+  /* Ensure the requested file is contained within the static directory */
+  if (!resolvedPath.startsWith(`${Deno.cwd()}${SEP}static${SEP}css`)) {
+    return new Response("Bad Request", { status : 400 });
+  }
+
+  /* Ensure the file has a .css extension to prevent serving non-css files */
+  if (extname(resolvedPath) !== ".css") {
+    return new Response("Bad Request", { status: 400 });
+  }
+
   /* Check for existance of params[0] within /static/css/ */
   try {
-    await Deno.lstat(`static/css/${params[0]}`)
+    await Deno.lstat(filepath)
   } catch (_err) {
     return new Response("File not found.", { status: 400 });
   }
   
   try {
-    const css = await Deno.readTextFile(`static/css/${params[0]}`);
+    const css = await Deno.readTextFile(filepath);
     return new Response(css, { headers: { 'Content-Type' : 'text/css',}})
   } catch (_err) {
     return new Response("Error reading CSS file...", {status: 500})
