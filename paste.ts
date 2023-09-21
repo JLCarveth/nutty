@@ -16,10 +16,12 @@ import { extname, resolve, SEP } from "https://deno.land/std@0.202.0/path/mod.ts
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
 import { template as index } from "./templates/index.ts";
 import { SQLiteService as service, verify } from "./auth.ts";
+
 const SQLiteService = service.getInstance();
-export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
+
+export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 export const version = "1.0.0";
 
 
