@@ -20,6 +20,26 @@ const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
 export const version = "1.0.0";
 
+const indexTemplate = () => {
+  return `<html>
+  <head>
+    <title>Welcome to Paste</title>
+  </head>
+  <body>
+    <p>This is a very rudimentary index.html webpage. Nutty version <b>${version}</b></p>
+  </body>
+</html>`
+};
+
+function serveIndex() {
+  return new Response(indexTemplate(), { headers : { 'Content-Type': 'text/html'}});
+}
+/**
+ * Returns the HTML index webpage
+ */
+get("/index.html", serveIndex);
+get("/", serveIndex);
+
 /**
  * Authenticate with the API to recieve an access token
  * @function
