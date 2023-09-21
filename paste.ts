@@ -24,8 +24,10 @@ const indexTemplate = () => {
   return `<html>
   <head>
     <title>Welcome to Paste</title>
+    <link rel="stylesheet" href="css/styles.css"/>
   </head>
   <body>
+    <h1>Welcome to Paste!</h1>
     <p>This is a very rudimentary index.html webpage. Nutty version <b>${version}</b></p>
   </body>
 </html>`
@@ -39,6 +41,26 @@ function serveIndex() {
  */
 get("/index.html", serveIndex);
 get("/", serveIndex);
+
+/**
+ * Serve static CSS files...
+ */
+get("/css/*", async (_req, _path, params) => {
+  if (!params) return new Response("Bad Request", { status: 400 });
+  /* Check for existance of params[0] within /static/css/ */
+  try {
+    await Deno.lstat(`static/css/${params[0]}`)
+  } catch (_err) {
+    return new Response("File not found.", { status: 400 });
+  }
+  
+  try {
+    const css = await Deno.readTextFile(`static/css/${params[0]}`);
+    return new Response(css, { headers: { 'Content-Type' : 'text/css',}})
+  } catch (_err) {
+    return new Response("Error reading CSS file...", {status: 500})
+  }
+});
 
 /**
  * Authenticate with the API to recieve an access token

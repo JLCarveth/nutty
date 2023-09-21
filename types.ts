@@ -1,7 +1,7 @@
 export type RouteHandler = (
   req: Request,
   path: URLPattern,
-  params?: Record<string, unknown>,
+  params?: Record<string, string | undefined>,
 ) => Promise<Response> | Response;
 
 export interface Route {
