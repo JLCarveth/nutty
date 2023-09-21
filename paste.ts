@@ -12,27 +12,38 @@
  * GET /api/paste to return the UUIDs of all stored pastes
  */
 import { addRoute, get, listen, post } from "./server.ts";
-import { extname, resolve, SEP } from "https://deno.land/std@0.202.0/path/mod.ts";
+import {
+  extname,
+  resolve,
+  SEP,
+} from "https://deno.land/std@0.202.0/path/mod.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
 import { template as index } from "./templates/index.ts";
+import { template as login } from "./templates/login.ts";
 import { SQLiteService as service, verify } from "./auth.ts";
 
 const SQLiteService = service.getInstance();
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
+const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 export const version = "1.0.0";
 
-
 function serveIndex() {
-  return new Response(index({ version }), { headers : { 'Content-Type': 'text/html'}});
+  return new Response(index({ version }), {
+    headers: { "Content-Type": "text/html" },
+  });
 }
-/**
- * Returns the HTML index webpage
- */
+
+/* Serve HTML webpages */
 get("/index.html", serveIndex);
 get("/", serveIndex);
+get("/login", () => {
+  return new Response(login({ version }), {
+    headers: { "Content-Type": "text/html" },
+  });
+});
 
 /**
  * Serve static CSS files...
@@ -45,7 +56,7 @@ get("/css/*", async (_req, _path, params) => {
 
   /* Ensure the requested file is contained within the static directory */
   if (!resolvedPath.startsWith(`${Deno.cwd()}${SEP}static${SEP}css`)) {
-    return new Response("Bad Request", { status : 400 });
+    return new Response("Bad Request", { status: 400 });
   }
 
   /* Ensure the file has a .css extension to prevent serving non-css files */
@@ -55,16 +66,16 @@ get("/css/*", async (_req, _path, params) => {
 
   /* Check for existance of params[0] within /static/css/ */
   try {
-    await Deno.lstat(filepath)
+    await Deno.lstat(filepath);
   } catch (_err) {
     return new Response("File not found.", { status: 400 });
   }
-  
+
   try {
     const css = await Deno.readTextFile(filepath);
-    return new Response(css, { headers: { 'Content-Type' : 'text/css',}})
+    return new Response(css, { headers: { "Content-Type": "text/css" } });
   } catch (_err) {
-    return new Response("Error reading CSS file...", {status: 500})
+    return new Response("Error reading CSS file...", { status: 500 });
   }
 });
 
@@ -127,15 +138,44 @@ post("/api/register", async (req, _path, _params) => {
 post("/api/paste", async (req, _path, _params) => {
   const filename = crypto.randomUUID();
   const token = req.headers.get("X-Access-Token");
-  const text = await req.text();
-  if (!token) {
-    return new Response(
-      "Missing or invalid secret key...",
-      {
-        status: 401,
-      },
-    );
+
+  const accepts = req.headers.get("Accept");
+  const contentType = req.headers.get("Content-Type");
+  const html = (accepts !== null) ? accepts.includes("text/html") : false;
+
+  let text;
+
+  if (contentType) {
+    if (contentType.includes("application/x-www-form-urlencoded") && html) {
+      const formData = await req.formData();
+      text = formData.get("text") as string;
+    } else {
+      text = await req.text();
+    }
   }
+
+  const data = (new TextEncoder()).encode(text);
+
+  if (!token) {
+    if (!PUBLIC_PASTES) {
+      return new Response(
+        "Missing or invalid token...",
+        {
+          status: 401,
+        },
+      );
+    } else {
+      await Deno.writeFile(`${TARGET_DIR}/public/${filename}`, data);
+      if (accepts !== null && accepts.includes("text/html")) {
+        return new Response(null, {
+          status: 302,
+          headers: { "Location": `/api/${filename}` },
+        });
+      }
+      return new Response(filename);
+    }
+  }
+
   let uuid = "";
   try {
     const payload = await verify(token);
@@ -143,10 +183,16 @@ post("/api/paste", async (req, _path, _params) => {
   } catch (_err) {
     return new Response("Could not verify token", { status: 401 });
   }
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
+
   await Deno.mkdir(`${TARGET_DIR}/${uuid}`, { recursive: true });
   await Deno.writeFile(`${TARGET_DIR}/${uuid}/${filename}`, data);
+
+  if (accepts !== null && accepts.includes("text/html")) {
+    return new Response(null, {
+      status: 302,
+      headers: { "Location": `/api/${filename}` },
+    });
+  }
   return new Response(filename);
 });
 

@@ -1,6 +1,4 @@
-export type Data = {
-  version: string;
-};
+import { Data } from "./index.ts";
 
 export function template(data: Data) {
   return `<html>
@@ -14,11 +12,7 @@ export function template(data: Data) {
       <p class="version">${data.version}</p>
     </div>
     <main>
-    <form action="/api/paste" method="post">
-        <textarea name="text" placeholder="Enter your message here" rows="20" required></textarea><br>
-        <input type="submit" value="Submit">
-        <input type="reset" value="Reset">
-      </form>
+      <h1>Login Coming Soon</h1>
     </main>
   </body>
 </html>`;
