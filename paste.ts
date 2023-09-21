@@ -14,6 +14,7 @@
 import { addRoute, get, listen, post } from "./server.ts";
 import { extname, resolve, SEP } from "https://deno.land/std@0.202.0/path/mod.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
+import { template as index } from "./templates/index.ts";
 import { SQLiteService as service, verify } from "./auth.ts";
 const SQLiteService = service.getInstance();
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
@@ -21,21 +22,9 @@ const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
 export const version = "1.0.0";
 
-const indexTemplate = () => {
-  return `<html>
-  <head>
-    <title>Welcome to Paste</title>
-    <link rel="stylesheet" href="css/styles.css"/>
-  </head>
-  <body>
-    <h1>Welcome to Paste!</h1>
-    <p>This is a very rudimentary index.html webpage. Nutty version <b>${version}</b></p>
-  </body>
-</html>`
-};
 
 function serveIndex() {
-  return new Response(indexTemplate(), { headers : { 'Content-Type': 'text/html'}});
+  return new Response(index({ version }), { headers : { 'Content-Type': 'text/html'}});
 }
 /**
  * Returns the HTML index webpage
