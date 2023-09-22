@@ -31,10 +31,10 @@ const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 export const version = "1.1.2";
 
-function getCookieValue(cookieString, cookieName) {
-  let cookies = cookieString.split("; ");
+function getCookieValue(cookieString : string, cookieName : string) {
+  const cookies = cookieString.split("; ");
   for (let i = 0; i < cookies.length; i++) {
-    let cookieParts = cookies[i].split("=");
+    const cookieParts = cookies[i].split("=");
     if (cookieParts[0] === cookieName) {
       return cookieParts[1];
     }
