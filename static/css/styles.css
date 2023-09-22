@@ -23,7 +23,6 @@ main {
   color: #f2f2f2;
   padding: 14px 16px;
   text-decoration: none;
-  font-size: 2rem;
 }
 
 .navbar a:hover {
@@ -35,7 +34,7 @@ p.version {
   float: right;
   padding: 14px 16px;
   color: #f2f2f2;
-  font-size: 1rem;
+  font-family: Courier New;
 }
 
 textarea {
@@ -55,4 +54,8 @@ input[type="submit"], input[type="reset"] {
 
 input[type="submit"]:hover, input[type="reset"]:hover {
   background-color: #00D;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: "Courier New";
 }

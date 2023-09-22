@@ -25,10 +25,22 @@ import { SQLiteService as service, verify } from "./auth.ts";
 const SQLiteService = service.getInstance();
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
+const DOMAIN = Deno.env.get("DOMAIN");
 const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.1.1";
+export const version = "1.1.2";
+
+function getCookieValue(cookieString, cookieName) {
+  let cookies = cookieString.split("; ");
+  for (let i = 0; i < cookies.length; i++) {
+    let cookieParts = cookies[i].split("=");
+    if (cookieParts[0] === cookieName) {
+      return cookieParts[1];
+    }
+  }
+  return null;
+}
 
 function serveIndex() {
   return new Response(index({ version }), {
@@ -89,7 +101,12 @@ get("/css/*", async (_req, _path, params) => {
  * @returns {string} a jsonwebtoken on success
  */
 post("/api/login", async (req, _path, _params) => {
-  const body = await req.json();
+  let body;
+  try {
+    body = await req.json();
+  } catch (_err) {
+    return new Response("Bad Request", { status: 400 });
+  }
   const email = body.email;
   const password = body.password;
 
@@ -100,7 +117,12 @@ post("/api/login", async (req, _path, _params) => {
   }
   try {
     const token = await SQLiteService.login(email, password);
-    return new Response(token);
+    return new Response(token, {
+      headers: {
+        "Set-Cookie":
+          `token=${token}; Max-Age=86400; HttpOnly; Domain=${DOMAIN};`,
+      },
+    });
   } catch (err) {
     return new Response(err.message, { status: 401 });
   }
@@ -137,7 +159,8 @@ post("/api/register", async (req, _path, _params) => {
  */
 post("/api/paste", async (req, _path, _params) => {
   const filename = crypto.randomUUID();
-  const token = req.headers.get("X-Access-Token");
+  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
 
   const accepts = req.headers.get("Accept");
   const contentType = req.headers.get("Content-Type");
@@ -204,7 +227,8 @@ post("/api/paste", async (req, _path, _params) => {
  * @returns {Array} an array of UUIDs associated to pastes
  */
 get("/api/paste", async (req, _path, _params) => {
-  const token = req.headers.get("X-Access-Token");
+  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
   if (!token) {
     return new Response(
       "Missing or invalid secret key...",
@@ -252,7 +276,8 @@ get("/api/version", (_req, _path, _params) => {
  */
 get("/api/share/:uuid", async (req, _path, params) => {
   const uuid = params?.uuid;
-  const token = req.headers.get("X-Access-Token");
+  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
   let userid = "";
 
   if (!token) return new Response("Missing or invalid token.");
@@ -290,7 +315,8 @@ get("/api/share/:uuid", async (req, _path, params) => {
  */
 get("/api/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
-  const token = req.headers.get("X-Access-Token");
+  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
   let uuid = "";
   // Before checking token, look in TARGET_DIR/public for the uuid
   try {
@@ -325,7 +351,8 @@ get("/api/:uuid", async (req, _path, params) => {
  * @returns {string} OK
  */
 addRoute("/api/:uuid", "DELETE", async (req, _path, params) => {
-  const token = req.headers.get("X-Access-Token");
+  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
   if (!token) return new Response("Invalid or missing token");
   let userID = "";
   try {
