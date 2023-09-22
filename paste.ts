@@ -31,6 +31,17 @@ const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 export const version = "1.1.2";
 
+function getCookieValue(cookieString, cookieName) {
+  let cookies = cookieString.split("; ");
+  for (let i = 0; i < cookies.length; i++) {
+    let cookieParts = cookies[i].split("=");
+    if (cookieParts[0] === cookieName) {
+      return cookieParts[1];
+    }
+  }
+  return null;
+}
+
 function serveIndex() {
   return new Response(index({ version }), {
     headers: { "Content-Type": "text/html" },
@@ -108,8 +119,9 @@ post("/api/login", async (req, _path, _params) => {
     const token = await SQLiteService.login(email, password);
     return new Response(token, {
       headers: {
-        "Set-Cookie" : `token=${token}; Max-Age=86400; HttpOnly; Domain=${DOMAIN};`,
-      }
+        "Set-Cookie":
+          `token=${token}; Max-Age=86400; HttpOnly; Domain=${DOMAIN};`,
+      },
     });
   } catch (err) {
     return new Response(err.message, { status: 401 });
@@ -147,7 +159,8 @@ post("/api/register", async (req, _path, _params) => {
  */
 post("/api/paste", async (req, _path, _params) => {
   const filename = crypto.randomUUID();
-  const token = req.headers.get("X-Access-Token");
+  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
 
   const accepts = req.headers.get("Accept");
   const contentType = req.headers.get("Content-Type");
