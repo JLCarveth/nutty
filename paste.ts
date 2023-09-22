@@ -159,7 +159,7 @@ post("/api/register", async (req, _path, _params) => {
  */
 post("/api/paste", async (req, _path, _params) => {
   const filename = crypto.randomUUID();
-  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
 
   const accepts = req.headers.get("Accept");
