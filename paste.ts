@@ -29,7 +29,7 @@ const DOMAIN = Deno.env.get("DOMAIN");
 const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.1.1";
+export const version = "1.1.2";
 
 function serveIndex() {
   return new Response(index({ version }), {
