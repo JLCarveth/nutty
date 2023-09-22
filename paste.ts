@@ -227,7 +227,8 @@ post("/api/paste", async (req, _path, _params) => {
  * @returns {Array} an array of UUIDs associated to pastes
  */
 get("/api/paste", async (req, _path, _params) => {
-  const token = req.headers.get("X-Access-Token");
+  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
   if (!token) {
     return new Response(
       "Missing or invalid secret key...",
@@ -275,7 +276,8 @@ get("/api/version", (_req, _path, _params) => {
  */
 get("/api/share/:uuid", async (req, _path, params) => {
   const uuid = params?.uuid;
-  const token = req.headers.get("X-Access-Token");
+  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
   let userid = "";
 
   if (!token) return new Response("Missing or invalid token.");
@@ -313,7 +315,8 @@ get("/api/share/:uuid", async (req, _path, params) => {
  */
 get("/api/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
-  const token = req.headers.get("X-Access-Token");
+  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
   let uuid = "";
   // Before checking token, look in TARGET_DIR/public for the uuid
   try {
@@ -348,7 +351,8 @@ get("/api/:uuid", async (req, _path, params) => {
  * @returns {string} OK
  */
 addRoute("/api/:uuid", "DELETE", async (req, _path, params) => {
-  const token = req.headers.get("X-Access-Token");
+  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
   if (!token) return new Response("Invalid or missing token");
   let userID = "";
   try {
