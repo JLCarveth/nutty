@@ -27,6 +27,7 @@ const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
 const DOMAIN = Deno.env.get("DOMAIN");
 const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
+const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 export const version = "1.1.2";
@@ -158,6 +159,11 @@ post("/api/register", async (req, _path, _params) => {
  * @returns {string} a UUID identifying the new paste
  */
 post("/api/paste", async (req, _path, _params) => {
+  const contentLength = req.headers.get("Content-Length");
+
+  if (contentLength && Number(contentLength) > MAX_SIZE) {
+    return new Response("Payload too large.", { status: 413 })
+  }
   const filename = crypto.randomUUID();
   const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
