@@ -8,7 +8,7 @@ export function template(data: Data) {
   </head>
   <body>
     <div class="navbar">
-      <a href="#">Paste.ts</a>
+      <h1><a href="#">Paste.ts</a></h1>
       <p class="version">${data.version}</p>
     </div>
     <main>
