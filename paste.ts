@@ -27,14 +27,15 @@ const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
 const DOMAIN = Deno.env.get("DOMAIN");
 const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
+const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.1.2";
+export const version = "1.1.3";
 
-function getCookieValue(cookieString, cookieName) {
-  let cookies = cookieString.split("; ");
+function getCookieValue(cookieString : string, cookieName : string) {
+  const cookies = cookieString.split("; ");
   for (let i = 0; i < cookies.length; i++) {
-    let cookieParts = cookies[i].split("=");
+    const cookieParts = cookies[i].split("=");
     if (cookieParts[0] === cookieName) {
       return cookieParts[1];
     }
@@ -123,8 +124,8 @@ post("/api/login", async (req, _path, _params) => {
           `token=${token}; Max-Age=86400; HttpOnly; Domain=${DOMAIN};`,
       },
     });
-  } catch (err) {
-    return new Response(err.message, { status: 401 });
+  } catch (_err) {
+    return new Response("Unauthorized", { status: 401 });
   }
 });
 
@@ -158,8 +159,13 @@ post("/api/register", async (req, _path, _params) => {
  * @returns {string} a UUID identifying the new paste
  */
 post("/api/paste", async (req, _path, _params) => {
+  const contentLength = req.headers.get("Content-Length");
+
+  if (contentLength && Number(contentLength) > MAX_SIZE) {
+    return new Response("Payload too large.", { status: 413 })
+  }
   const filename = crypto.randomUUID();
-  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
 
   const accepts = req.headers.get("Accept");
@@ -182,7 +188,7 @@ post("/api/paste", async (req, _path, _params) => {
   if (!token) {
     if (!PUBLIC_PASTES) {
       return new Response(
-        "Missing or invalid token...",
+        "Unauthorized",
         {
           status: 401,
         },
@@ -204,7 +210,7 @@ post("/api/paste", async (req, _path, _params) => {
     const payload = await verify(token);
     uuid = payload.userid as string;
   } catch (_err) {
-    return new Response("Could not verify token", { status: 401 });
+    return new Response("Unauthorized", { status: 401 });
   }
 
   await Deno.mkdir(`${TARGET_DIR}/${uuid}`, { recursive: true });
@@ -227,11 +233,11 @@ post("/api/paste", async (req, _path, _params) => {
  * @returns {Array} an array of UUIDs associated to pastes
  */
 get("/api/paste", async (req, _path, _params) => {
-  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
   if (!token) {
     return new Response(
-      "Missing or invalid secret key...",
+      "Unauthorized",
       {
         status: 401,
       },
@@ -242,7 +248,7 @@ get("/api/paste", async (req, _path, _params) => {
     const payload = await verify(token);
     uuid = payload.userid as string;
   } catch (_err) {
-    return new Response("Could not verify token", { status: 401 });
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const files = [];
@@ -276,16 +282,16 @@ get("/api/version", (_req, _path, _params) => {
  */
 get("/api/share/:uuid", async (req, _path, params) => {
   const uuid = params?.uuid;
-  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
   let userid = "";
 
-  if (!token) return new Response("Missing or invalid token.");
+  if (!token) return new Response("Unauthorized");
   try {
     const payload = await verify(token);
     userid = payload.userid as string;
   } catch (_err) {
-    return new Response("Missing or invalid token.");
+    return new Response("Unauthorized");
   }
 
   // check if file exists
@@ -315,7 +321,7 @@ get("/api/share/:uuid", async (req, _path, params) => {
  */
 get("/api/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
-  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
   let uuid = "";
   // Before checking token, look in TARGET_DIR/public for the uuid
@@ -326,18 +332,18 @@ get("/api/:uuid", async (req, _path, params) => {
   } catch (_err) {
     // File not found in  public/, continue with authentication
   }
-  if (!token) return new Response("Invalid or missing token");
+  if (!token) return new Response("Unauthorized", { status: 401});
   try {
     const payload = await verify(token);
     uuid = payload.userid as string;
   } catch (_err) {
-    return new Response("Invalid or missing token.");
+    return new Response("Unauthorized", { status: 401});
   }
   try {
     await Deno.lstat(`${TARGET_DIR}/${uuid}/${filename}`);
   } catch (_err) {
     // File doesn't exist
-    return new Response("File not found.", { status: 404 });
+    return new Response("Not Found", { status: 404 });
   }
   return serveFile(req, TARGET_DIR + "/" + uuid + "/" + filename);
 });
@@ -351,15 +357,15 @@ get("/api/:uuid", async (req, _path, params) => {
  * @returns {string} OK
  */
 addRoute("/api/:uuid", "DELETE", async (req, _path, params) => {
-  const cookie = getCookieValue(req.headers.get("Cookie"), "token");
+  const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
-  if (!token) return new Response("Invalid or missing token");
+  if (!token) return new Response("Unauthorized", { status: 401 });
   let userID = "";
   try {
     const payload = await verify(token);
     userID = payload.userid as string;
   } catch (_err) {
-    return new Response("Invalid or missing token");
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const uuid = params?.uuid;
@@ -373,7 +379,7 @@ addRoute("/api/:uuid", "DELETE", async (req, _path, params) => {
     await Deno.remove(`${TARGET_DIR}/${userID}/${uuid}`);
   } catch (err) {
     if (err instanceof Deno.errors.NotFound) {
-      return new Response("File not found.");
+      return new Response("Not Found", { status: 404});
     }
     return new Response("An unexpected error has occurred.", { status: 500 });
   }

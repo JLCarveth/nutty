@@ -2,3 +2,6 @@ data/*
 node_modules/*
 test.*
 *.db
+.envrc
+.env
+.vim/*
