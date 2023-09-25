@@ -30,7 +30,7 @@ const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.1.2";
+export const version = "1.1.3";
 
 function getCookieValue(cookieString : string, cookieName : string) {
   const cookies = cookieString.split("; ");
