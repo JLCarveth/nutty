@@ -42,6 +42,9 @@ Nutty depends on a couple of environment variables to be established before runn
 |`BASE_URL`|The base URL at which the API can be accessed.|`https://paste.mysite.com/api`|
 |`SECRET_KEY`|Used for signing JWTs. A secret key can be generated with `openssl rand -base64 32`|`GDZ1FzBF18dtAk2enanqqxskVf5hptmPjy/pcBm384M=`|
 |`PORT`|The port to listen to. Default is 5335|`5335`|
+|`PUBLIC_PASTES`|Whether to allow users to create pastes without an access token.|1,0,true,false|
+|`DEBUG`|Logs incoming requests for debugging purposes.|1,0,true,false|
+|`DOMAIN`|The domain used for the HTTP cookie|`paste.jlcarveth.dev`|
 
 ## Usage
 There is a simple client bash script which provides a simple example of using Nutty.

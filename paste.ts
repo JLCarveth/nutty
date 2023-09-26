@@ -73,6 +73,13 @@ get("/login", () => {
 /**
  * Serve static CSS files...
  */
+/**
+ * Serve static CSS files
+ * @function
+ * @name GET-/css/*
+ * @memberof nutty
+ * @returns the requested CSS file, or an HTTP error
+ */
 get("/css/*", async (_req, _path, params) => {
   if (!params) return new Response("Bad Request", { status: 400 });
 
@@ -339,7 +346,6 @@ get("/api/:uuid", async (req, _path, params) => {
   // Before checking token, look in TARGET_DIR/public for the uuid
   try {
     await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
-    // File does exist, return it.
     return serveFile(req, TARGET_DIR + "/public/" + filename);
   } catch (_err) {
     // File not found in  public/, continue with authentication
@@ -354,7 +360,6 @@ get("/api/:uuid", async (req, _path, params) => {
   try {
     await Deno.lstat(`${TARGET_DIR}/${uuid}/${filename}`);
   } catch (_err) {
-    // File doesn't exist
     return new Response("Not Found", { status: 404 });
   }
   return serveFile(req, TARGET_DIR + "/" + uuid + "/" + filename);
