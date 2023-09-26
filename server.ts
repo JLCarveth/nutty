@@ -1,3 +1,9 @@
+/**
+ * Zippy - Minimal Web Server
+ *
+ *  This was made for fun, should probably not be used for serious production workloads.
+ *  - John L. Carveth
+ */
 import { Route, RouteHandler } from "./types.ts";
 
 const routes: Route[] = [];

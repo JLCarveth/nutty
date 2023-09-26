@@ -18,9 +18,11 @@ import {
   SEP,
 } from "https://deno.land/std@0.202.0/path/mod.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
-import { template as index } from "./templates/index.ts";
-import { template as login } from "./templates/login.ts";
 import { SQLiteService as service, verify } from "./auth.ts";
+
+import { LayoutData, Layout } from "./templates/layout.ts";
+import { Index } from "./templates/index.ts";
+import { Login } from "./templates/login.ts";
 
 const SQLiteService = service.getInstance();
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
@@ -44,16 +46,26 @@ function getCookieValue(cookieString : string, cookieName : string) {
 }
 
 function serveIndex() {
-  return new Response(index({ version }), {
+  const data: LayoutData = {
+    title: "Paste.ts",
+    content: Index(),
+    version
+  };
+  return new Response(Layout(data), {
     headers: { "Content-Type": "text/html" },
-  });
+  })
 }
 
 /* Serve HTML webpages */
 get("/index.html", serveIndex);
 get("/", serveIndex);
 get("/login", () => {
-  return new Response(login({ version }), {
+  const data: LayoutData = {
+    title: "Paste.ts",
+    content: Login(),
+    version
+  };
+  return new Response(Layout(data), {
     headers: { "Content-Type": "text/html" },
   });
 });
