@@ -1,6 +1,6 @@
-import { Data } from "./index.ts";
+import { LayoutData } from "./layout.ts"
 
-export function Navbar(data: Data) {
+export function Navbar(data: LayoutData) {
   return `
     <div class="navbar">
       <h1><a href="#">Paste.ts</a></h1>

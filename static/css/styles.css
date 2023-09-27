@@ -59,3 +59,26 @@ input[type="submit"], input[type="reset"] {
 input[type="submit"]:hover, input[type="reset"]:hover {
   background-color: #00D;
 }
+
+footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background-color: #00F;
+  color: white;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+ul.footer-links {
+  text-align: center;
+  list-style-type: none;
+  color: white;
+}
+
+ul.footer-links a {
+  text-decoration: none;
+  color: white;
+}
