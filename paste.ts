@@ -71,9 +71,6 @@ get("/login", () => {
 });
 
 /**
- * Serve static CSS files...
- */
-/**
  * Serve static CSS files
  * @function
  * @name GET-/css/*

@@ -1,4 +1,5 @@
 import { Navbar } from "./navbar.ts";
+import { Footer } from "./footer.ts";
 
 export type LayoutData = {
   title: string;
@@ -12,6 +13,7 @@ export function Layout(data: LayoutData) {
   <head>
     <title>${data.title}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
     <link rel="stylesheet" href="css/styles.css"/>
   </head>
   <body>
@@ -19,6 +21,7 @@ export function Layout(data: LayoutData) {
     <main>
       ${data.content}
     </main>
+    ${Footer()}
   </body>
 </html>`;
 }
