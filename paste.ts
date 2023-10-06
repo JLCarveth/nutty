@@ -20,7 +20,7 @@ import {
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
 import { SQLiteService as service, verify } from "./auth.ts";
 
-import { LayoutData, Layout } from "./templates/layout.ts";
+import { Layout, LayoutData } from "./templates/layout.ts";
 import { Index } from "./templates/index.ts";
 import { Login } from "./templates/login.ts";
 
@@ -34,7 +34,7 @@ const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 export const version = "1.1.5";
 
-function getCookieValue(cookieString : string, cookieName : string) {
+function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
   for (let i = 0; i < cookies.length; i++) {
     const cookieParts = cookies[i].split("=");
@@ -49,11 +49,11 @@ function serveIndex() {
   const data: LayoutData = {
     title: "Paste.ts",
     content: Index(),
-    version
+    version,
   };
   return new Response(Layout(data), {
     headers: { "Content-Type": "text/html" },
-  })
+  });
 }
 
 /* Serve HTML webpages */
@@ -63,7 +63,7 @@ get("/login", () => {
   const data: LayoutData = {
     title: "Paste.ts",
     content: Login(),
-    version
+    version,
   };
   return new Response(Layout(data), {
     headers: { "Content-Type": "text/html" },
@@ -119,11 +119,17 @@ get("/css/*", async (_req, _path, params) => {
  */
 post("/api/login", async (req, _path, _params) => {
   let body;
-  try {
+  if (req.headers.get("Content-Type")?.includes("x-www-form-urlencoded")) {
+    const query = await req.text();
+    const params = new URLSearchParams(query);
+    body = {
+      email: params.get("email"),
+      password: params.get("password"),
+    };
+  } else {
     body = await req.json();
-  } catch (_err) {
-    return new Response("Bad Request", { status: 400 });
   }
+
   const email = body.email;
   const password = body.password;
 
@@ -134,12 +140,16 @@ post("/api/login", async (req, _path, _params) => {
   }
   try {
     const token = await SQLiteService.login(email, password);
-    return new Response(token, {
-      headers: {
-        "Set-Cookie":
-          `token=${token}; Max-Age=86400; HttpOnly; Domain=${DOMAIN};`,
-      },
-    });
+    const headers = {
+      "Set-Cookie":
+        `token=${token}; Max-Age=86400; HttpOnly; Domain=${DOMAIN};`,
+    };
+
+    if (req.headers.get("Accept")?.includes("text/html")) {
+      headers["Location"] = `/`;
+      return new Response(token, { headers, status: 302 });
+    }
+    return new Response(token, { headers });
   } catch (_err) {
     return new Response("Unauthorized", { status: 401 });
   }
@@ -178,7 +188,7 @@ post("/api/paste", async (req, _path, _params) => {
   const contentLength = req.headers.get("Content-Length");
 
   if (contentLength && Number(contentLength) > MAX_SIZE) {
-    return new Response("Payload too large.", { status: 413 })
+    return new Response("Payload too large.", { status: 413 });
   }
   const filename = crypto.randomUUID();
   const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
@@ -347,12 +357,12 @@ get("/api/:uuid", async (req, _path, params) => {
   } catch (_err) {
     // File not found in  public/, continue with authentication
   }
-  if (!token) return new Response("Unauthorized", { status: 401});
+  if (!token) return new Response("Unauthorized", { status: 401 });
   try {
     const payload = await verify(token);
     uuid = payload.userid as string;
   } catch (_err) {
-    return new Response("Unauthorized", { status: 401});
+    return new Response("Unauthorized", { status: 401 });
   }
   try {
     await Deno.lstat(`${TARGET_DIR}/${uuid}/${filename}`);
@@ -393,7 +403,7 @@ addRoute("/api/:uuid", "DELETE", async (req, _path, params) => {
     await Deno.remove(`${TARGET_DIR}/${userID}/${uuid}`);
   } catch (err) {
     if (err instanceof Deno.errors.NotFound) {
-      return new Response("Not Found", { status: 404});
+      return new Response("Not Found", { status: 404 });
     }
     return new Response("An unexpected error has occurred.", { status: 500 });
   }
