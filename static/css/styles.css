@@ -1,13 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,500;1,800&family=Open+Sans&family=Roboto+Condensed&display=swap');
 
 body {
   padding: 0;
   margin: 0;
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: 'Open Sans', sans-serif;
 }
 
 main {
   padding: 1rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
 }
 
 .navbar {
@@ -26,6 +28,9 @@ main {
   color: #f2f2f2;
   padding: 14px 16px;
   text-decoration: none;
+  font-family: 'Montserrat';
+  font-weight: 800;
+  font-style: italic;
 }
 
 .navbar a:hover {
@@ -43,17 +48,18 @@ textarea {
   width: 100%;
   padding: 10px;
   margin-bottom: 10px;
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: 'Open Sans', sans-serif;
 }
 
 input[type="submit"], input[type="reset"] {
-  padding: 10px 20px;
+  padding: 10px 30px;
   margin-right: 10px;
   border: none;
   background-color: #00F;
   color: white;
   border-radius: 4px;
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
 }
 
 input[type="submit"]:hover, input[type="reset"]:hover {
