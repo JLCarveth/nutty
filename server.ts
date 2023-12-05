@@ -8,8 +8,9 @@ import { Route, RouteHandler } from "./types.ts";
 
 const routes: Route[] = [];
 const DEBUG = Deno.env.get("DEBUG") ? true : false;
+
 /**
- * Handles and incoming HTTP request
+ * Handles incoming HTTP requests
  */
 async function serveHttp(conn: Deno.Conn) {
   const httpConn = Deno.serveHttp(conn);
@@ -39,17 +40,25 @@ async function serveHttp(conn: Deno.Conn) {
   }
 }
 
+/**
+ * Assigns a new GET route to the web server.
+ */
 export function get(path: string, handler: RouteHandler) {
   const urlPattern = new URLPattern({ pathname: path });
   routes.push({ path: urlPattern, action: "GET", handler: handler });
 }
 
+/**
+ *  Assigns a new POST route to the web server.
+ */
 export function post(path: string, handler: RouteHandler) {
   const urlPattern = new URLPattern({ pathname: path });
   routes.push({ path: urlPattern, action: "POST", handler: handler });
 }
 
-/** */
+/** 
+ * Assign a new route to the web server.
+ */
 export function addRoute(path: string, action: string, handler: RouteHandler) {
   const urlPattern = new URLPattern({ pathname: path });
   routes.push({ path: urlPattern, action: action, handler: handler });
