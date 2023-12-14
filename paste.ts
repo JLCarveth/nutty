@@ -171,8 +171,17 @@ post("/api/register", async (req, _path, _params) => {
   if (!email || !password) {
     return new Response("Missing parameters", { status: 400 });
   }
-  const uuid = SQLiteService.register(email, password);
-  return new Response(uuid);
+
+  try {
+    const uuid = SQLiteService.register(email, password);
+    return new Response(uuid);
+  } catch (err) {
+    console.log(err.message);
+    if (err.message === "UNIQUE constraint failed: users.email") {
+      return new Response("Conflict", { status: 409 });
+    }
+    return new Response("Server Error", { status: 500});
+  }
 });
 
 /**

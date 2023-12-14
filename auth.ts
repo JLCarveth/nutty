@@ -77,7 +77,7 @@ export class SQLiteService {
       db.exec(
         `CREATE TABLE IF NOT EXISTS users (\
             userid text primary key not null,\
-            email text not null,\
+            email text unique not null,\
             password text not null)`,
       );
     } catch (err) {
