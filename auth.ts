@@ -2,7 +2,13 @@
  * Utility class for implementing authentication functionality
  */
 const SECRET_KEY = Deno.env.get("SECRET_KEY") || "__NOKEY__";
-const KEY = await crypto.subtle.generateKey(
+
+const encoder = new TextEncoder();
+const keyBuf = encoder.encode(SECRET_KEY);
+
+const KEY = await crypto.subtle.importKey(
+  "raw",
+  keyBuf,
   {
     name: "HMAC",
     hash: "SHA-512",
