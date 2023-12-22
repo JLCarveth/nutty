@@ -176,7 +176,6 @@ post("/api/register", async (req, _path, _params) => {
     const uuid = SQLiteService.register(email, password);
     return new Response(uuid);
   } catch (err) {
-    console.log(err.message);
     if (err.message === "UNIQUE constraint failed: users.email") {
       return new Response("Conflict", { status: 409 });
     }
