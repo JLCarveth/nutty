@@ -6,7 +6,10 @@
  * @author John L. Carveth <jlcarveth@gmail.com>
  * @date 2023-12-14
  */
-import { assert, assertEquals } from "https://deno.land/std@0.209.0/assert/mod.ts";
+import {
+  assert,
+  assertEquals,
+} from "https://deno.land/std@0.209.0/assert/mod.ts";
 import { verify } from "./auth.ts";
 
 const baseURL = Deno.env.get("BASE_URL");
@@ -59,7 +62,11 @@ Deno.test("Registration with taken email address", async () => {
   const _text = await resp.text();
 
   if (!resp.ok) {
-    return assertEquals(resp.statusText, "Conflict", `Unexpected response from the server. Expected 'Conflict', recieved ${resp.statusText}`);
+    return assertEquals(
+      resp.statusText,
+      "Conflict",
+      `Unexpected response from the server. Expected 'Conflict', recieved ${resp.statusText}`,
+    );
   }
 
   throw new Error(`Unexpected Response. ${resp.statusText}`);
@@ -72,12 +79,12 @@ Deno.test("Test simple login request", async () => {
   const body = {
     email: "test@mail.com",
     password: "password",
-  }
+  };
 
   const resp = await fetch(`${baseURL}/login`, {
     method: "POST",
-    headers: { "Content-Type" : "application/json" },
-    body: JSON.stringify(body)
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
 
   if (!resp.ok) {
@@ -86,4 +93,36 @@ Deno.test("Test simple login request", async () => {
 
   const token = await resp.text();
   assert(await verify(token), "Token could not be verified.");
+});
+
+/**
+ * Test #4 - Test an invalid login
+ */
+Deno.test("Test invalid login credentials", async () => {
+  const body = {
+    email: "bad@mail.com",
+    password: "password",
+  };
+
+  const resp = await fetch(`${baseURL}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  const text = await resp.text();
+  if (!resp.ok) {
+    assertEquals(
+      resp.status,
+      401,
+      `Unexpected response status code. Expected 401, received ${resp.status}`,
+    );
+    assertEquals(
+      text,
+      "Unauthorized",
+      `Unexpected response text. Expected 'Unauthorized', received ${text}`,
+    );
+
+    return;
+  }
 });
