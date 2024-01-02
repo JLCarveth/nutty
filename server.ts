@@ -7,7 +7,8 @@
 import { Route, RouteHandler } from "./types.ts";
 
 const routes: Route[] = [];
-const DEBUG = Deno.env.get("DEBUG") ? true : false;
+const DEBUG = Deno.env.get("DEBUG") === "true";
+
 
 /**
  * Handles incoming HTTP requests
@@ -19,8 +20,9 @@ async function serveHttp(conn: Deno.Conn) {
     const method = requestEvent.request.method;
     const path = requestEvent.request.url;
 
-    if (DEBUG)
+    if (DEBUG) {
       console.log(`${method}-${path}`);
+    }
 
     /* Iterate through registered routes for a match */
     for (const route of routes) {
