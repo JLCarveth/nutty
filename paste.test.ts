@@ -126,3 +126,33 @@ Deno.test("Test invalid login credentials", async () => {
     return;
   }
 });
+
+/**
+ * Test #5 - Making a public paste
+ */
+Deno.test("Making a public paste", async () => {
+  const PUBLIC = Deno.env.get("PUBLIC_PASTES");
+  const body = "Hello, World!";
+
+  const response = await fetch(`${baseURL}/paste`, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: body,
+  });
+
+  if (!response.ok) {
+    if (!PUBLIC) {
+      assertEquals(
+        response.status,
+        401,
+        `Unexpected HTTP status, expected 401, recieved ${response.status}`,
+      );
+      return;
+    }
+
+    throw new Error(`Unexpected Error: ${response.status} ${response.statusText}`);
+  }
+
+  const uuid = await response.text();
+  assert(uuidRegex.test(uuid), `Returned value ${uuid} is not a valid UUIDv4`);
+});

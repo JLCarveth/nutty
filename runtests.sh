@@ -16,7 +16,7 @@ paste_pid=$(ps aux | grep "$deno_path run -A --unstable paste.ts" | grep -v grep
 # Run tests
 $deno_path test -A --unstable
 
+# Cleanup testing environment
 kill $paste_pid
-
 rm test.db
 
