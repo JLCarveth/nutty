@@ -1,0 +1,6 @@
+{
+  "tasks" : {
+    "run" : "deno run -A --unstable paste.ts",
+    "test" : "bash runtests.sh"
+  }
+}
