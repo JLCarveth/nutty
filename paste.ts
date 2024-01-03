@@ -32,7 +32,7 @@ const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.2.2";
+export const version = "1.3.0";
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -142,7 +142,7 @@ post("/api/login", async (req, _path, _params) => {
     const token = await SQLiteService.login(email, password);
     const headers = {
       "Set-Cookie":
-        `token=${token}; Max-Age=86400; HttpOnly; Domain=${DOMAIN};`,
+        `token=${token}; Max-Age=86400; Domain=${DOMAIN}`,
     };
 
     if (req.headers.get("Accept")?.includes("text/html")) {
@@ -180,6 +180,28 @@ post("/api/register", async (req, _path, _params) => {
       return new Response("Conflict", { status: 409 });
     }
     return new Response("Server Error", { status: 500});
+  }
+});
+
+
+/**
+ * Allows the client to check the validity of their login token
+ * @function
+ * @name GET-/api/auth/status
+ * @memberof nutty
+ * @returns {string} 200 OK if the token is valid, 401 Unauthorized if not.
+ */
+get("/api/auth/status", async (req, _path, _params) => {
+  const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
+
+  if (!token) return new Response("Unauthorized", { status: 401 });
+  try {
+    // verify() throws an error if token is invalid
+    await verify(token);
+    return new Response("OK", { status: 200 });
+  } catch (_err) {
+    return new Response("Unauthorized", { status: 401 });
   }
 });
 
