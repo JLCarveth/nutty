@@ -17,6 +17,8 @@ const baseURL = Deno.env.get("BASE_URL");
 const uuidRegex =
   /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
 
+let token = "";
+
 /**
  * Test #1 - Simple Registration
  */
@@ -91,7 +93,7 @@ Deno.test("Test simple login request", async () => {
     throw new Error(`Unexpected Response: ${resp.status} ${resp.statusText}`);
   }
 
-  const token = await resp.text();
+  token = await resp.text();
   assert(await verify(token), "Token could not be verified.");
 });
 
@@ -155,4 +157,17 @@ Deno.test("Making a public paste", async () => {
 
   const uuid = await response.text();
   assert(uuidRegex.test(uuid), `Returned value ${uuid} is not a valid UUIDv4`);
+});
+
+Deno.test("Validating a token", async () => {
+  const resp = await fetch(`${baseURL}/auth/status`, {
+    headers: { "X-Access-Token" : token },
+  });
+
+  if (!resp.ok) {
+    throw new Error(`Couldn't verify token.`);
+  }
+
+  const text = await resp.text();
+  assertEquals(text, "OK", `Unexpected response, expected 'OK', recieved ${text}`);
 });
