@@ -77,7 +77,7 @@ Deno.test("Registration with taken email address", async () => {
 /**
  * Test #3 - Simple Login test
  */
-Deno.test("Test simple login request", async () => {
+Deno.test("Simple login request", async () => {
   const body = {
     email: "test@mail.com",
     password: "password",
@@ -100,7 +100,7 @@ Deno.test("Test simple login request", async () => {
 /**
  * Test #4 - Test an invalid login
  */
-Deno.test("Test invalid login credentials", async () => {
+Deno.test("Invalid login credentials", async () => {
   const body = {
     email: "bad@mail.com",
     password: "password",
