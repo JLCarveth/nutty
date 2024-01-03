@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 1.1.5
+ * @version 1.3.0
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -93,18 +93,52 @@ get("/css/*", async (_req, _path, params) => {
     return new Response("Bad Request", { status: 400 });
   }
 
-  /* Check for existance of params[0] within /static/css/ */
+  /* Check for existence of params[0] within /static/css/ */
   try {
     await Deno.lstat(filepath);
   } catch (_err) {
-    return new Response("File not found.", { status: 400 });
+    return new Response("Not found.", { status: 404 });
   }
 
   try {
     const css = await Deno.readTextFile(filepath);
     return new Response(css, { headers: { "Content-Type": "text/css" } });
   } catch (_err) {
-    return new Response("Error reading CSS file...", { status: 500 });
+    return new Response("Server Error", { status: 500 });
+  }
+});
+
+/**
+ * Serve static JS files
+ * @function
+ * @name GET-/js/*
+ * @memberof nutty
+ * @returns the requested file, or an HTTP error
+ */
+get("/js/*", async (_req, _path, params) => {
+  if (!params) return new Response("Bad Request", { status: 400 });
+
+  const filepath = `static/js/${params[0]}`;
+  const resolvedPath = resolve(Deno.cwd(), filepath);
+
+  /* Ensure the requested file is contained within the static directory */
+  if (!resolvedPath.startsWith(`${Deno.cwd()}${SEP}static${SEP}js`)) {
+    return new Response("Bad Request", { status: 400 });
+  }
+
+  /* Check for existence of params[0] within static/js */
+  try {
+    await Deno.lstat(filepath);
+  } catch (_err) {
+    return new Response("Not Found", { status: 404 });
+  }
+
+  /* Finally, serve the file */
+  try {
+    const js = await Deno.readTextFile(filepath);
+    return new Response(js, { headers: { "Content-Type": "text/javascript" } });
+  } catch (_err) {
+    return new Response("Server Error", { status: 500 });
   }
 });
 
@@ -141,8 +175,7 @@ post("/api/login", async (req, _path, _params) => {
   try {
     const token = await SQLiteService.login(email, password);
     const headers = {
-      "Set-Cookie":
-        `token=${token}; Max-Age=86400; Domain=${DOMAIN}`,
+      "Set-Cookie": `token=${token}; Max-Age=86400; Domain=${DOMAIN}`,
     };
 
     if (req.headers.get("Accept")?.includes("text/html")) {
@@ -179,10 +212,9 @@ post("/api/register", async (req, _path, _params) => {
     if (err.message === "UNIQUE constraint failed: users.email") {
       return new Response("Conflict", { status: 409 });
     }
-    return new Response("Server Error", { status: 500});
+    return new Response("Server Error", { status: 500 });
   }
 });
-
 
 /**
  * Allows the client to check the validity of their login token

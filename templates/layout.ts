@@ -2,9 +2,10 @@ import { Navbar } from "./navbar.ts";
 import { Footer } from "./footer.ts";
 
 export type LayoutData = {
-  title: string;
-  content: string;
-  version: string;
+  title?: string;
+  content?: string;
+  version?: string;
+  scripts?: string[];
 };
 
 export function Layout(data: LayoutData) {
@@ -22,6 +23,7 @@ export function Layout(data: LayoutData) {
       ${data.content}
     </main>
     ${Footer()}
+    ${data.scripts?.join("\n")}
   </body>
 </html>`;
 }
