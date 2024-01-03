@@ -23,7 +23,7 @@ export function Layout(data: LayoutData) {
       ${data.content}
     </main>
     ${Footer()}
-    ${data.scripts?.join("\n")}
+    ${data.scripts?.join("\n") ?? ""}
   </body>
 </html>`;
 }
