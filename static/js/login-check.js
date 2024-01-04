@@ -8,6 +8,5 @@ const _status = await resp.text();
 
 if (_status === "OK") {
   const welcomeElement = document.getElementById("welcome");
-  welcomeElement.style.display = "block";
   welcomeElement.innerText = "Welcome back!";
 }
