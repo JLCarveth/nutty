@@ -339,6 +339,13 @@ get("/api/paste", async (req, _path, _params) => {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  /* Check that directory exists */
+  try {
+    await Deno.lstat(`${TARGET_DIR}/${uuid}`);
+  } catch (_err) {
+    return new Response(JSON.stringify([]));
+  }
+
   const files = [];
   for await (const filename of Deno.readDir(`${TARGET_DIR}/${uuid}`)) {
     files.push(filename.name);
