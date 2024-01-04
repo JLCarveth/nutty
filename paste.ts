@@ -189,6 +189,15 @@ post("/api/login", async (req, _path, _params) => {
   }
 });
 
+post("/api/logout", (_req, _path, _params) => {
+  const headers = { 
+    "Set-Cookie" : `token=""; Max-Age=0; Domain=${DOMAIN}`,
+    "Location" : "/"
+  }
+
+  return new Response(null, { status: 302, headers});
+});
+
 /**
  * Registers a new account
  * @function
