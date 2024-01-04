@@ -176,7 +176,7 @@ post("/api/login", async (req, _path, _params) => {
   try {
     const token = await SQLiteService.login(email, password);
     const headers = {
-      "Set-Cookie": `token=${token}; Max-Age=86400; Domain=${DOMAIN}`,
+      "Set-Cookie": `token=${token}; Max-Age=86400;`,
     };
 
     if (req.headers.get("Accept")?.includes("text/html")) {
@@ -189,9 +189,16 @@ post("/api/login", async (req, _path, _params) => {
   }
 });
 
+/**
+ * Removes any existing tokens stored as a cookie
+ * @function
+ * @name POST-/api/logout
+ * @memberof nutty
+ * @returns A 302 redirect
+ */
 post("/api/logout", (_req, _path, _params) => {
   const headers = { 
-    "Set-Cookie" : `token=""; Max-Age=0; Domain=${DOMAIN}`,
+    "Set-Cookie" : `token=""; Max-Age=0;`,
     "Location" : "/"
   }
 
