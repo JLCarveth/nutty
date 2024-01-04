@@ -176,7 +176,7 @@ post("/api/login", async (req, _path, _params) => {
   try {
     const token = await SQLiteService.login(email, password);
     const headers = {
-      "Set-Cookie": `token=${token}; Max-Age=86400;`,
+      "Set-Cookie": `token=${token}; Max-Age=86400; Domain=${DOMAIN}`,
     };
 
     if (req.headers.get("Accept")?.includes("text/html")) {
@@ -198,7 +198,7 @@ post("/api/login", async (req, _path, _params) => {
  */
 post("/api/logout", (_req, _path, _params) => {
   const headers = { 
-    "Set-Cookie" : `token=""; Max-Age=0;`,
+    "Set-Cookie" : `token=""; Max-Age=0; Domain=${DOMAIN}`,
     "Location" : "/"
   }
 
