@@ -152,16 +152,21 @@ Deno.test("Making a public paste", async () => {
       return;
     }
 
-    throw new Error(`Unexpected Error: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Unexpected Error: ${response.status} ${response.statusText}`,
+    );
   }
 
   const uuid = await response.text();
   assert(uuidRegex.test(uuid), `Returned value ${uuid} is not a valid UUIDv4`);
 });
 
+/**
+ * Test #6 - Validating an existing access token
+ */
 Deno.test("Validating a token", async () => {
   const resp = await fetch(`${baseURL}/auth/status`, {
-    headers: { "X-Access-Token" : token },
+    headers: { "X-Access-Token": token },
   });
 
   if (!resp.ok) {
@@ -169,5 +174,55 @@ Deno.test("Validating a token", async () => {
   }
 
   const text = await resp.text();
-  assertEquals(text, "OK", `Unexpected response, expected 'OK', recieved ${text}`);
+  assertEquals(
+    text,
+    "OK",
+    `Unexpected response, expected 'OK', recieved ${text}`,
+  );
+});
+
+/**
+ * Test #7 - Fetching all of a user's pastes
+ */
+Deno.test("Fetching user's pastes", async () => {
+  /* Intially, route should return [] */
+  const resp = await fetch(`${baseURL}/paste`, {
+    headers: { "X-Access-Token": token },
+  });
+
+  if (!resp.ok) {
+    throw new Error(`Error fetching pastes. ${resp.status} ${resp.statusText}`);
+  }
+
+  let json = await resp.json();
+  assertEquals(
+    JSON.stringify(json),
+    "[]",
+    `Unexpected response. Expected [], recieved ${JSON.stringify(json)}`,
+  );
+
+  /* Add a new paste */
+  const resp2 = await fetch(`${baseURL}/paste`, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain", "X-Access-Token" : token },
+    body: "Hello, World!",
+  });
+
+  if (!resp.ok) {
+    throw new Error(`Error creating new paste. ${resp2.status} ${resp.statusText}`);
+  }
+
+  const uuid = await resp2.text();
+
+  /* Ensure new paste is returned in array from GET-/api/paste */
+  const resp3 = await fetch(`${baseURL}/paste`, {
+    headers: { "X-Access-Token": token },
+  });
+
+  if (!resp3.ok) {
+    throw new Error(`Error fetching pastes. ${resp.status} ${resp.statusText}`);
+  }
+
+  json = await resp3.json();
+  assert(json[0] === uuid, `Expected ${uuid}, recieved ${json[0]}`);
 });
