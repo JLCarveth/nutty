@@ -50,6 +50,7 @@ function serveIndex() {
     title: "Paste.ts",
     content: Index(),
     version,
+    scripts: [`<script src="/js/login-check.js" type="module"></script>`]
   };
   return new Response(Layout(data), {
     headers: { "Content-Type": "text/html" },
