@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 1.4.0
+ * @version 1.5.0
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -32,7 +32,7 @@ const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.4.0";
+export const version = "1.5.0";
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -187,6 +187,22 @@ post("/api/login", async (req, _path, _params) => {
   } catch (_err) {
     return new Response("Unauthorized", { status: 401 });
   }
+});
+
+/**
+ * Removes any existing tokens stored as a cookie
+ * @function
+ * @name POST-/api/logout
+ * @memberof nutty
+ * @returns A 302 redirect
+ */
+post("/api/logout", (_req, _path, _params) => {
+  const headers = { 
+    "Set-Cookie" : `token=""; Max-Age=0; Domain=${DOMAIN}`,
+    "Location" : "/"
+  }
+
+  return new Response(null, { status: 302, headers});
 });
 
 /**
