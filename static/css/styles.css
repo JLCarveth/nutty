@@ -38,6 +38,17 @@ main {
   color: black;
 }
 
+.right-side {
+  display: flex;
+  align-items: center;
+  color: white;
+}
+
+.welcome {
+  display: none;
+  padding-right: 2rem;
+}
+
 p.version {
   float: right;
   padding: 14px 16px;
