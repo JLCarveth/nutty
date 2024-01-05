@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 1.5.0
+ * @version 1.6.0
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -32,7 +32,7 @@ const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.5.0";
+export const version = "1.6.0";
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -50,7 +50,7 @@ function serveIndex() {
     title: "Paste.ts",
     content: Index(),
     version,
-    scripts: [`<script src="/js/login-check.js" type="module"></script>`]
+    scripts: [`<script src="/js/login-check.js" type="module"></script>`],
   };
   return new Response(Layout(data), {
     headers: { "Content-Type": "text/html" },
@@ -197,12 +197,12 @@ post("/api/login", async (req, _path, _params) => {
  * @returns A 302 redirect
  */
 post("/api/logout", (_req, _path, _params) => {
-  const headers = { 
-    "Set-Cookie" : `token=""; Max-Age=0; Domain=${DOMAIN}`,
-    "Location" : "/"
-  }
+  const headers = {
+    "Set-Cookie": `token=""; Max-Age=0; Domain=${DOMAIN}`,
+    "Location": "/",
+  };
 
-  return new Response(null, { status: 302, headers});
+  return new Response(null, { status: 302, headers });
 });
 
 /**
@@ -340,34 +340,53 @@ post("/api/paste", async (req, _path, _params) => {
 get("/api/paste", async (req, _path, _params) => {
   const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
-  if (!token) {
-    return new Response(
-      "Unauthorized",
-      {
-        status: 401,
-      },
-    );
-  }
-  let uuid = "";
-  try {
-    const payload = await verify(token);
-    uuid = payload.userid as string;
-  } catch (_err) {
-    return new Response("Unauthorized", { status: 401 });
-  }
 
-  /* Check that directory exists */
-  try {
-    await Deno.lstat(`${TARGET_DIR}/${uuid}`);
-  } catch (_err) {
-    return new Response(JSON.stringify([]));
-  }
+  if (token) {
+    let uuid = "";
+    try {
+      const payload = await verify(token);
+      uuid = payload.userid as string;
+    } catch (_err) {
+      return new Response("Unauthorized", { status: 401 });
+    }
 
-  const files = [];
-  for await (const filename of Deno.readDir(`${TARGET_DIR}/${uuid}`)) {
-    files.push(filename.name);
+    /* Check that directory exists */
+    try {
+      await Deno.lstat(`${TARGET_DIR}/${uuid}`);
+    } catch (_err) {
+      return new Response(JSON.stringify([]));
+    }
+
+    const files = [];
+    for await (const filename of Deno.readDir(`${TARGET_DIR}/${uuid}`)) {
+      files.push(filename.name);
+    }
+    return new Response(JSON.stringify(files));
+  } else {
+    /* Return top 5 most recent public pastes, if PUBLIC_PASTES=1 */
+    if (!PUBLIC_PASTES) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    const publicFiles = [];
+    let recentFiles = [];
+    try {
+      const publicDir = `${TARGET_DIR}/public`;
+
+      for await (const dirEntry of Deno.readDir(publicDir)) {
+        const file = await Deno.stat(`${publicDir}/${dirEntry.name}`);
+        file.name = dirEntry.name;
+        publicFiles.push(file);
+      }
+
+      recentFiles = publicFiles.sort((a, b) => {
+        return b.mtime!.getTime() - a.mtime!.getTime();
+      }).slice(0, 5);
+    } catch (_err) {
+      return new Response("Server Error", { status: 500 });
+    }
+    return new Response(JSON.stringify(recentFiles.map((item) => item.name)));
   }
-  return new Response(JSON.stringify(files));
 });
 
 /**
