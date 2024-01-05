@@ -182,7 +182,7 @@ Deno.test("Validating a token", async () => {
 });
 
 /**
- * Test #7 - Fetching all of a user's pastes
+ * Test #7 - Fetching all of a user's pastes (authenticated)
  */
 Deno.test("Fetching user's pastes", async () => {
   /* Intially, route should return [] */
