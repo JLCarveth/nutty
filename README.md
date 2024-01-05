@@ -1,5 +1,5 @@
 # Nutty
-#### A simple HTTP paste server
+#### A simple HTTP paste server - Contributions Welcome!
 
 Nutty is a self-hostable paste server, allowing you to easily upload and share text files instantly.
 
