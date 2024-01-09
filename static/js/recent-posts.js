@@ -7,7 +7,6 @@ if (!response.ok) {
   throw new Error("Could not fetch recent posts.");
 }
 const posts = await response.json();
-if (posts.length === 0) return;
 
 /* Update the #recent-posts HTML element */
 const htmlElement = document.getElementById("recent-posts");
