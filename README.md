@@ -7,7 +7,7 @@ Nutty is a self-hostable paste server, allowing you to easily upload and share t
 - A simple HTTP interface
 - A simple Web interface (WIP)
 - Public and private pastes
-- Low memory footprint
+- [Low memory footprint](https://github.com/JLCarveth/nutty/assets/23156861/b449813a-719a-4c9b-8922-f91f70101b1d)
 
 ## Installation
 
