@@ -10,6 +10,9 @@ main {
   padding: 1rem;
   padding-left: 2rem;
   padding-right: 2rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .navbar {
