@@ -100,8 +100,14 @@ ul.footer-links a {
   color: white;
 }
 
-div.login-form {
-  margin: auto;
+div.middle {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 4rem;
+}
+
+.text-align-center {
+  text-align: center;
 }
 
 input.form-control {

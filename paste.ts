@@ -23,6 +23,7 @@ import { SQLiteService as service, verify } from "./auth.ts";
 import { Layout, LayoutData } from "./templates/layout.ts";
 import { Index } from "./templates/index.ts";
 import { Login } from "./templates/login.ts";
+import { _404 } from "./templates/404.ts";
 
 const SQLiteService = service.getInstance();
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
@@ -516,6 +517,18 @@ addRoute("/api/:uuid", "DELETE", async (req, _path, params) => {
     return new Response("An unexpected error has occurred.", { status: 500 });
   }
   return new Response("OK");
+});
+
+/* A catch-all 404 page if no other route matches. */
+get("*", () => {
+  const data: LayoutData = {
+    title: "Not Found",
+    content: _404(),
+    version,
+  };
+  return new Response(Layout(data), {
+    headers: { "Content-Type": "text/html" },
+  });
 });
 
 listen(PORT);
