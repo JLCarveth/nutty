@@ -5,7 +5,10 @@ export function Navbar(data: LayoutData) {
     <div class="navbar">
       <h1><a href="/">Paste.ts</a></h1>
       <div class="right-side">
-        <p class="welcome" id="welcome"><a href="/login">Login</a></p>
+        <div class="welcome" id="welcome">
+          <a href="/login">Login</a>
+          <a href="/register">Register</a>
+        </div>
         <p class="version">${data.version}</p>
       </div>
     </div>

@@ -5,6 +5,7 @@ export function Login() {
       <div class="alert" id="alert" style="display:none">
         Login failed, please try again.
       </div>
+      <h2>Login</h2>
       <form method="POST" action="${BASE_URL}/login">
         <label for="email" class="form-label">Email</label>
         <input type="email" name="email" placeholder="janedoe@mail.com" class="form-control"/>
