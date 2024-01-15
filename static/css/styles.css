@@ -114,6 +114,15 @@ input.form-control {
   border-radius: 4px;
   border: 1px solid black;
   padding: 10px 20px;
-  margin: 10px;
+  margin-bottom: 10px;
   width: 100%;
+}
+ 
+.alert {
+  padding: 1rem;
+  border: solid 1px #FF5C3A;
+  background: #FF8C74;
+  color: white;
+  border-radius: 10px;
+  margin-bottom: 2rem;
 }
