@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 1.7.2
+ * @version 1.8.0
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -23,6 +23,8 @@ import { SQLiteService as service, verify } from "./auth.ts";
 import { Layout, LayoutData } from "./templates/layout.ts";
 import { Index } from "./templates/index.ts";
 import { Login } from "./templates/login.ts";
+import { Register } from "./templates/register.ts";
+import { _404 } from "./templates/404.ts";
 
 const SQLiteService = service.getInstance();
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
@@ -32,7 +34,7 @@ const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.7.2";
+export const version = "1.8.0";
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -69,6 +71,17 @@ get("/login", () => {
     content: Login(),
     version,
   };
+  return new Response(Layout(data), {
+    headers: { "Content-Type": "text/html" },
+  });
+});
+get("/register", () => {
+  const data: LayoutData = {
+    title: "Paste.ts",
+    content: Register(),
+    version,
+  };
+
   return new Response(Layout(data), {
     headers: { "Content-Type": "text/html" },
   });
@@ -188,6 +201,10 @@ post("/api/login", async (req, _path, _params) => {
     }
     return new Response(token, { headers });
   } catch (_err) {
+    if (req.headers.get("Content-Type")?.includes("x-www-form-urlencoded")) {
+      const headers = { "Location" : "/login#failed" };
+      return new Response(null, { headers, status: 302 })
+    }
     return new Response("Unauthorized", { status: 401 });
   }
 });
@@ -217,7 +234,18 @@ post("/api/logout", (_req, _path, _params) => {
  * @returns {string} a UUID
  */
 post("/api/register", async (req, _path, _params) => {
-  const body = await req.json();
+  let body;
+  if (req.headers.get("Content-Type")?.includes("x-www-form-urlencoded")) {
+    const query = await req.text();
+    const params = new URLSearchParams(query);
+    body = {
+      email: params.get("email"),
+      password: params.get("password"),
+    };
+  } else {
+    body = await req.json();
+  }
+
   const email = body.email;
   const password = body.password;
 
@@ -227,6 +255,12 @@ post("/api/register", async (req, _path, _params) => {
 
   try {
     const uuid = SQLiteService.register(email, password);
+
+    if (req.headers.get("Accept")?.includes("text/html")) {
+      const headers = { "Location" : "/login" };
+      return new Response(null, { headers, status: 302 });
+    }
+    
     return new Response(uuid);
   } catch (err) {
     if (err.message === "UNIQUE constraint failed: users.email") {
@@ -516,6 +550,18 @@ addRoute("/api/:uuid", "DELETE", async (req, _path, params) => {
     return new Response("An unexpected error has occurred.", { status: 500 });
   }
   return new Response("OK");
+});
+
+/* A catch-all 404 page if no other route matches. */
+get("*", () => {
+  const data: LayoutData = {
+    title: "Not Found",
+    content: _404(),
+    version,
+  };
+  return new Response(Layout(data), {
+    headers: { "Content-Type": "text/html" },
+  });
 });
 
 listen(PORT);
