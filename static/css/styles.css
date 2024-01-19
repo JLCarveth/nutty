@@ -126,3 +126,12 @@ input.form-control {
   border-radius: 10px;
   margin-bottom: 2rem;
 }
+
+.code-block {
+  max-height: 75vh;
+  overflow: scroll;
+  padding: 20px;
+  border: solid 1px #ccc;
+  border-radius: 20px;
+  box-shadow: 0px 10px 10px 2px rgba(0,0,0,0.72)
+}

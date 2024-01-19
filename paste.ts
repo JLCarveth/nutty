@@ -116,7 +116,7 @@ get("/paste/:uuid", async (req, _path, params) => {
     const data: LayoutData = {
       title: "Paste.ts",
       content:
-        `<div style="max-height: 75vh; overflow: scroll"><pre><code>${highlighted}</code></pre></div>`,
+        `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
       version,
       stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
     };
