@@ -20,7 +20,7 @@ import {
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
 import { SQLiteService as service, verify } from "./auth.ts";
 import { highlightText } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/index.js";
-import { detectLanguage } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/detect.js"
+import { detectLanguage } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/detect.js";
 
 import { Layout, LayoutData } from "./templates/layout.ts";
 import { Index } from "./templates/index.ts";
@@ -100,7 +100,7 @@ get("/paste/:uuid", async (req, _path, params) => {
     await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
     const text = await Deno.readTextFile(`${TARGET_DIR}/public/${filename}`);
     const css = await Deno.readTextFile(`static/css/highlight.css`);
-    const html = (body : string) => `
+    const html = (body: string) => `
       <head>
         <style>${css}</style>
       </head>
@@ -110,10 +110,19 @@ get("/paste/:uuid", async (req, _path, params) => {
     `;
 
     const language = detectLanguage(text);
-    console.log(`Language Detected: ${language}`);
 
-    const highlighted = await highlightText(text, language, { multiline: true});
-    return new Response(html(highlighted), { headers: { "Content-Type" : "text/html"}});
+    const highlighted = await highlightText(text, language, false);
+
+    const data: LayoutData = {
+      title: "Paste.ts",
+      content:
+        `<div style="max-height: 75vh; overflow: scroll"><pre><code>${highlighted}</code></pre></div>`,
+      version,
+      stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
+    };
+    return new Response(Layout(data), {
+      headers: { "Content-Type": "text/html" },
+    });
   } catch (_err) {
     /* Public paste not found, continue checking authentication */
   }
@@ -236,8 +245,8 @@ post("/api/login", async (req, _path, _params) => {
     return new Response(token, { headers });
   } catch (_err) {
     if (req.headers.get("Content-Type")?.includes("x-www-form-urlencoded")) {
-      const headers = { "Location" : "/login#failed" };
-      return new Response(null, { headers, status: 302 })
+      const headers = { "Location": "/login#failed" };
+      return new Response(null, { headers, status: 302 });
     }
     return new Response("Unauthorized", { status: 401 });
   }
@@ -291,10 +300,10 @@ post("/api/register", async (req, _path, _params) => {
     const uuid = SQLiteService.register(email, password);
 
     if (req.headers.get("Accept")?.includes("text/html")) {
-      const headers = { "Location" : "/login" };
+      const headers = { "Location": "/login" };
       return new Response(null, { headers, status: 302 });
     }
-    
+
     return new Response(uuid);
   } catch (err) {
     if (err.message === "UNIQUE constraint failed: users.email") {
