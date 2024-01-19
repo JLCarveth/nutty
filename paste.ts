@@ -19,6 +19,8 @@ import {
 } from "https://deno.land/std@0.202.0/path/mod.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
 import { SQLiteService as service, verify } from "./auth.ts";
+import { highlightText } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/index.js";
+import { detectLanguage } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/detect.js"
 
 import { Layout, LayoutData } from "./templates/layout.ts";
 import { Index } from "./templates/index.ts";
@@ -85,6 +87,38 @@ get("/register", () => {
   return new Response(Layout(data), {
     headers: { "Content-Type": "text/html" },
   });
+});
+
+get("/paste/:uuid", async (req, _path, params) => {
+  const filename = params?.uuid;
+  const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
+
+  let uuid = "";
+  /* Before checking token, see if a public paste w/ this UUID exists */
+  try {
+    await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
+    const text = await Deno.readTextFile(`${TARGET_DIR}/public/${filename}`);
+    const css = await Deno.readTextFile(`static/css/highlight.css`);
+    const html = (body : string) => `
+      <head>
+        <style>${css}</style>
+      </head>
+      <body>
+        <pre><code>${body}</code></pre>
+      </body>
+    `;
+
+    const language = detectLanguage(text);
+    console.log(`Language Detected: ${language}`);
+
+    const highlighted = await highlightText(text, language, { multiline: true});
+    return new Response(html(highlighted), { headers: { "Content-Type" : "text/html"}});
+  } catch (_err) {
+    /* Public paste not found, continue checking authentication */
+  }
+
+  return new Response("OK");
 });
 
 /**
