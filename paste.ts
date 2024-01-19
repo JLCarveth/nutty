@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 1.8.0
+ * @version 1.9.0
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -19,6 +19,8 @@ import {
 } from "https://deno.land/std@0.202.0/path/mod.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
 import { SQLiteService as service, verify } from "./auth.ts";
+import { highlightText } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/index.js";
+import { detectLanguage } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/detect.js";
 
 import { Layout, LayoutData } from "./templates/layout.ts";
 import { Index } from "./templates/index.ts";
@@ -34,7 +36,7 @@ const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.8.0";
+export const version = "1.9.0";
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -85,6 +87,47 @@ get("/register", () => {
   return new Response(Layout(data), {
     headers: { "Content-Type": "text/html" },
   });
+});
+
+get("/paste/:uuid", async (req, _path, params) => {
+  const filename = params?.uuid;
+  const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
+  const token = req.headers.get("X-Access-Token") || cookie;
+
+  let uuid = "";
+  /* Before checking token, see if a public paste w/ this UUID exists */
+  try {
+    await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
+    const text = await Deno.readTextFile(`${TARGET_DIR}/public/${filename}`);
+    const css = await Deno.readTextFile(`static/css/highlight.css`);
+    const html = (body: string) => `
+      <head>
+        <style>${css}</style>
+      </head>
+      <body>
+        <pre><code>${body}</code></pre>
+      </body>
+    `;
+
+    const language = detectLanguage(text);
+
+    const highlighted = await highlightText(text, language, false);
+
+    const data: LayoutData = {
+      title: "Paste.ts",
+      content:
+        `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
+      version,
+      stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
+    };
+    return new Response(Layout(data), {
+      headers: { "Content-Type": "text/html" },
+    });
+  } catch (_err) {
+    /* Public paste not found, continue checking authentication */
+  }
+
+  return new Response("OK");
 });
 
 /**
@@ -202,8 +245,8 @@ post("/api/login", async (req, _path, _params) => {
     return new Response(token, { headers });
   } catch (_err) {
     if (req.headers.get("Content-Type")?.includes("x-www-form-urlencoded")) {
-      const headers = { "Location" : "/login#failed" };
-      return new Response(null, { headers, status: 302 })
+      const headers = { "Location": "/login#failed" };
+      return new Response(null, { headers, status: 302 });
     }
     return new Response("Unauthorized", { status: 401 });
   }
@@ -257,10 +300,10 @@ post("/api/register", async (req, _path, _params) => {
     const uuid = SQLiteService.register(email, password);
 
     if (req.headers.get("Accept")?.includes("text/html")) {
-      const headers = { "Location" : "/login" };
+      const headers = { "Location": "/login" };
       return new Response(null, { headers, status: 302 });
     }
-    
+
     return new Response(uuid);
   } catch (err) {
     if (err.message === "UNIQUE constraint failed: users.email") {
