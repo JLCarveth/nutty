@@ -20,7 +20,7 @@ for (const uuid of posts) {
   const li = document.createElement("li");
   const a = document.createElement("a");
   a.innerText = uuid;
-  a.href = `/api/${uuid}`;
+  a.href = `/paste/${uuid}`;
   li.appendChild(a);
   list.appendChild(li);
 }
