@@ -94,23 +94,49 @@ get("/paste/:uuid", async (req, _path, params) => {
   const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
 
-  let uuid = "";
   /* Before checking token, see if a public paste w/ this UUID exists */
+  if (PUBLIC_PASTES) {
+    try {
+      await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
+      const text = await Deno.readTextFile(`${TARGET_DIR}/public/${filename}`);
+      const language = detectLanguage(text);
+      const highlighted = await highlightText(text, language, false);
+
+      const data: LayoutData = {
+        title: "Paste.ts",
+        content:
+          `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
+        version,
+        stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
+      };
+
+      return new Response(Layout(data), {
+        headers: { "Content-Type": "text/html" },
+      });
+    } catch (_err) {
+      /* Public paste not found, continue checking authentication */
+    }
+  }
+
+  if (!token) {
+    /* No token provided, PUBLIC_PASTES is either false or no public paste was found */
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  let uuid = "";
   try {
-    await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
+    const payload = await verify(token);
+    uuid = payload.userid as string;
+  } catch (_err) {
+    /* Invalid / Expired token was provided */
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  /* Check that the directory exists */
+  try {
+    await Deno.lstat(`${TARGET_DIR}/${uuid}/${filename}`);
     const text = await Deno.readTextFile(`${TARGET_DIR}/public/${filename}`);
-    const css = await Deno.readTextFile(`static/css/highlight.css`);
-    const html = (body: string) => `
-      <head>
-        <style>${css}</style>
-      </head>
-      <body>
-        <pre><code>${body}</code></pre>
-      </body>
-    `;
-
     const language = detectLanguage(text);
-
     const highlighted = await highlightText(text, language, false);
 
     const data: LayoutData = {
@@ -120,14 +146,13 @@ get("/paste/:uuid", async (req, _path, params) => {
       version,
       stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
     };
+
     return new Response(Layout(data), {
       headers: { "Content-Type": "text/html" },
     });
   } catch (_err) {
-    /* Public paste not found, continue checking authentication */
+    return new Response("Not Found", { status: 404 });
   }
-
-  return new Response("OK");
 });
 
 /**
