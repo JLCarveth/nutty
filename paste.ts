@@ -288,7 +288,7 @@ post("/api/login", async (req, _path, _params) => {
  */
 post("/api/logout", (_req, _path, _params) => {
   const headers = {
-    "Set-Cookie": `token=""; Max-Age=0;`,
+    "Set-Cookie": `token=""; Max-Age=0; Path=/`,
     "Location": "/",
   };
 
