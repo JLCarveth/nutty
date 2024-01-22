@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 1.9.0
+ * @version 1.9.1
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -36,7 +36,7 @@ const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.9.0";
+export const version = "1.9.1";
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -94,23 +94,50 @@ get("/paste/:uuid", async (req, _path, params) => {
   const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
 
-  let uuid = "";
   /* Before checking token, see if a public paste w/ this UUID exists */
+  if (PUBLIC_PASTES) {
+    try {
+      await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
+      const text = await Deno.readTextFile(`${TARGET_DIR}/public/${filename}`);
+      const language = detectLanguage(text);
+      const highlighted = await highlightText(text, language, false);
+
+      const data: LayoutData = {
+        title: "Paste.ts",
+        content:
+          `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
+        version,
+        stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
+        scripts: ['<script src="/js/login-check.js" type="module"></script>'],
+      };
+
+      return new Response(Layout(data), {
+        headers: { "Content-Type": "text/html" },
+      });
+    } catch (_err) {
+      /* Public paste not found, continue checking authentication */
+    }
+  }
+
+  if (!token) {
+    /* No token provided, PUBLIC_PASTES is either false or no public paste was found */
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  let uuid = "";
   try {
-    await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
-    const text = await Deno.readTextFile(`${TARGET_DIR}/public/${filename}`);
-    const css = await Deno.readTextFile(`static/css/highlight.css`);
-    const html = (body: string) => `
-      <head>
-        <style>${css}</style>
-      </head>
-      <body>
-        <pre><code>${body}</code></pre>
-      </body>
-    `;
+    const payload = await verify(token);
+    uuid = payload.userid as string;
+  } catch (_err) {
+    /* Invalid / Expired token was provided */
+    return new Response("Unauthorized", { status: 401 });
+  }
 
+  /* Check that the directory exists */
+  try {
+    await Deno.lstat(`${TARGET_DIR}/${uuid}/${filename}`);
+    const text = await Deno.readTextFile(`${TARGET_DIR}/${uuid}/${filename}`);
     const language = detectLanguage(text);
-
     const highlighted = await highlightText(text, language, false);
 
     const data: LayoutData = {
@@ -119,15 +146,15 @@ get("/paste/:uuid", async (req, _path, params) => {
         `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
       version,
       stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
+      scripts: ['<script src="/js/login-check.js" type="module"></script>'],
     };
+
     return new Response(Layout(data), {
       headers: { "Content-Type": "text/html" },
     });
   } catch (_err) {
-    /* Public paste not found, continue checking authentication */
+    return new Response("Not Found", { status: 404 });
   }
-
-  return new Response("OK");
 });
 
 /**
@@ -235,7 +262,7 @@ post("/api/login", async (req, _path, _params) => {
   try {
     const token = await SQLiteService.login(email, password);
     const headers = {
-      "Set-Cookie": `token=${token}; Max-Age=86400; Domain=${DOMAIN}`,
+      "Set-Cookie": `token=${token}; Max-Age=86400; Path=/`,
     };
 
     if (req.headers.get("Accept")?.includes("text/html")) {
@@ -261,7 +288,7 @@ post("/api/login", async (req, _path, _params) => {
  */
 post("/api/logout", (_req, _path, _params) => {
   const headers = {
-    "Set-Cookie": `token=""; Max-Age=0; Domain=${DOMAIN}`,
+    "Set-Cookie": `token=""; Max-Age=0; Path=/`,
     "Location": "/",
   };
 
