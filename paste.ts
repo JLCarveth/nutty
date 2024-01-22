@@ -108,6 +108,7 @@ get("/paste/:uuid", async (req, _path, params) => {
           `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
         version,
         stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
+        scripts: ['<script src="/js/login-check.js" type="module"></script>'],
       };
 
       return new Response(Layout(data), {
@@ -135,7 +136,7 @@ get("/paste/:uuid", async (req, _path, params) => {
   /* Check that the directory exists */
   try {
     await Deno.lstat(`${TARGET_DIR}/${uuid}/${filename}`);
-    const text = await Deno.readTextFile(`${TARGET_DIR}/public/${filename}`);
+    const text = await Deno.readTextFile(`${TARGET_DIR}/${uuid}/${filename}`);
     const language = detectLanguage(text);
     const highlighted = await highlightText(text, language, false);
 
@@ -145,6 +146,7 @@ get("/paste/:uuid", async (req, _path, params) => {
         `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
       version,
       stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
+      scripts: ['<script src="/js/login-check.js" type="module"></script>'],
     };
 
     return new Response(Layout(data), {
@@ -260,7 +262,7 @@ post("/api/login", async (req, _path, _params) => {
   try {
     const token = await SQLiteService.login(email, password);
     const headers = {
-      "Set-Cookie": `token=${token}; Max-Age=86400; Domain=${DOMAIN}`,
+      "Set-Cookie": `token=${token}; Max-Age=86400; Path=/`,
     };
 
     if (req.headers.get("Accept")?.includes("text/html")) {
@@ -286,7 +288,7 @@ post("/api/login", async (req, _path, _params) => {
  */
 post("/api/logout", (_req, _path, _params) => {
   const headers = {
-    "Set-Cookie": `token=""; Max-Age=0; Domain=${DOMAIN}`,
+    "Set-Cookie": `token=""; Max-Age=0;`,
     "Location": "/",
   };
 
