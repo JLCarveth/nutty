@@ -105,10 +105,13 @@ get("/paste/:uuid", async (req, _path, params) => {
       const data: LayoutData = {
         title: "Paste.ts",
         content:
-          `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
+          `<div class="code-block" id="code-block"><pre><code>${highlighted}</code></pre><button class="copy" id="copy">Copy to Clipboard</button></div>`,
         version,
         stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
-        scripts: ['<script src="/js/login-check.js" type="module"></script>'],
+        scripts: [
+          '<script src="/js/login-check.js" type="module"></script>',
+          '<script src="/js/clipboard.js" type="module"></script>'
+          ],
       };
 
       return new Response(Layout(data), {
@@ -143,7 +146,7 @@ get("/paste/:uuid", async (req, _path, params) => {
     const data: LayoutData = {
       title: "Paste.ts",
       content:
-        `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
+        `<div class="code-block"><pre><code>${highlighted}</code></pre><button class="copy">Copy to Clipboard</button></div>`,
       version,
       stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
       scripts: ['<script src="/js/login-check.js" type="module"></script>'],
