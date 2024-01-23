@@ -142,4 +142,7 @@ input.form-control {
   top: 0;
   right: 0;
   margin: 20px;
+  padding: 10px;
+  border: solid 1px #CCC;
+  border-radius: 10px;
 }
