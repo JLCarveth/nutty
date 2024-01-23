@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 1.9.1
+ * @version 1.9.2
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -36,7 +36,7 @@ const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.9.1";
+export const version = "1.9.2";
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -105,10 +105,13 @@ get("/paste/:uuid", async (req, _path, params) => {
       const data: LayoutData = {
         title: "Paste.ts",
         content:
-          `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
+          `<div class="code-block" id="code-block"><pre><code>${highlighted}</code></pre><button class="copy" id="copy">Copy to Clipboard</button></div>`,
         version,
         stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
-        scripts: ['<script src="/js/login-check.js" type="module"></script>'],
+        scripts: [
+          '<script src="/js/login-check.js" type="module"></script>',
+          '<script src="/js/clipboard.js" type="module"></script>',
+        ],
       };
 
       return new Response(Layout(data), {
@@ -143,7 +146,7 @@ get("/paste/:uuid", async (req, _path, params) => {
     const data: LayoutData = {
       title: "Paste.ts",
       content:
-        `<div class="code-block"><pre><code>${highlighted}</code></pre></div>`,
+        `<div class="code-block"><pre><code>${highlighted}</code></pre><button class="copy">Copy to Clipboard</button></div>`,
       version,
       stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
       scripts: ['<script src="/js/login-check.js" type="module"></script>'],
