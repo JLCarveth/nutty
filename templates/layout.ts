@@ -11,6 +11,7 @@ export type LayoutData = {
 
 export function Layout(data: LayoutData) {
   return `
+<!DOCTYPE html>
 <html>
   <head>
     <title>${data.title}</title>
