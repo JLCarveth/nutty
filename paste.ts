@@ -433,7 +433,7 @@ post("/api/paste", async (req, _path, _params) => {
   if (accepts !== null && accepts.includes("text/html")) {
     return new Response(null, {
       status: 302,
-      headers: { "Location": `/api/${filename}` },
+      headers: { "Location": `/paste/${filename}` },
     });
   }
   return new Response(filename);
