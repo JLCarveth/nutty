@@ -18,7 +18,8 @@ import {
   SEP,
 } from "https://deno.land/std@0.202.0/path/mod.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
-import { SQLiteService as service, verify } from "./auth.ts";
+import { verify } from "./auth.ts";
+import { SQLiteService as service } from "./db.ts";
 import { highlightText } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/index.js";
 import { detectLanguage } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/detect.js";
 
