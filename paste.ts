@@ -28,12 +28,14 @@ import { Index } from "./templates/index.ts";
 import { Login } from "./templates/login.ts";
 import { Register } from "./templates/register.ts";
 import { _404 } from "./templates/404.ts";
+import { Burn } from "./templates/burn.ts";
 
 const SQLiteService = service.getInstance();
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
 const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
+const DOMAIN = Deno.env.get("DOMAIN");
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
 export const version = "1.9.3";
@@ -82,6 +84,25 @@ get("/register", () => {
     title: "Paste.ts",
     content: Register(),
     version,
+  };
+
+  return new Response(Layout(data), {
+    headers: { "Content-Type": "text/html" },
+  });
+});
+
+get("/burn/:uuid", (req, _path, params) => {
+  const filename = params?.uuid;
+  if (!filename) return new Response("Bad Request", { status: 400 });
+
+  const data: LayoutData = {
+    title: "Paste.ts",
+    version,
+    content: Burn(`${DOMAIN}/burn/${filename}`),
+    scripts: [
+      '<script src="/js/login-check.js" type="module"></script>',
+      '<script src="/js/burnable-clip.js" type="module"></script>',
+    ],
   };
 
   return new Response(Layout(data), {
