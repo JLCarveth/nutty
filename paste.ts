@@ -94,6 +94,8 @@ get("/paste/:uuid", async (req, _path, params) => {
   const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
 
+  if (!filename) return new Response("Bad Request", { status: 400 });
+
   /* Before checking token, see if a public paste w/ this UUID exists */
   if (PUBLIC_PASTES) {
     try {
@@ -113,6 +115,12 @@ get("/paste/:uuid", async (req, _path, params) => {
           '<script src="/js/clipboard.js" type="module"></script>',
         ],
       };
+
+      /* Check if burnable, delete file if so */
+      if (SQLiteService.isBurnable(filename)) {
+        await Deno.remove(`${TARGET_DIR}/public/${filename}`);
+        SQLiteService.removeBurnable(filename);
+      }
 
       return new Response(Layout(data), {
         headers: { "Content-Type": "text/html" },
@@ -151,6 +159,11 @@ get("/paste/:uuid", async (req, _path, params) => {
       stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
       scripts: ['<script src="/js/login-check.js" type="module"></script>'],
     };
+    /* Check if burnable, delete file if so */
+    if (SQLiteService.isBurnable(filename)) {
+      await Deno.remove(`${TARGET_DIR}/${uuid}/${filename}`);
+      SQLiteService.removeBurnable(filename);
+    }
 
     return new Response(Layout(data), {
       headers: { "Content-Type": "text/html" },
@@ -389,6 +402,13 @@ post("/api/paste", async (req, _path, _params) => {
 
   let text;
 
+  /* Add the UUID to the burn_on_read table if param set */
+  const queryParams = new URL(req.url).searchParams;
+  const burn = queryParams.get("burn");
+  if (burn) {
+    SQLiteService.createBurnable(filename);
+  }
+
   if (contentType) {
     if (contentType.includes("application/x-www-form-urlencoded") && html) {
       const formData = await req.formData();
@@ -413,7 +433,9 @@ post("/api/paste", async (req, _path, _params) => {
       if (accepts !== null && accepts.includes("text/html")) {
         return new Response(null, {
           status: 302,
-          headers: { "Location": `/api/${filename}` },
+          headers: {
+            "Location": (burn ? `/burn/${filename}` : `/paste/${filename}`),
+          },
         });
       }
       return new Response(filename);
@@ -434,7 +456,9 @@ post("/api/paste", async (req, _path, _params) => {
   if (accepts !== null && accepts.includes("text/html")) {
     return new Response(null, {
       status: 302,
-      headers: { "Location": `/api/${filename}` },
+      headers: {
+        "Location": (burn ? `/burn/${filename}` : `/paste/${filename}`),
+      },
     });
   }
   return new Response(filename);
@@ -564,11 +588,21 @@ get("/api/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
   const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
+
+  if (!filename) return new Response("Bad Request", { status: 400 });
+
   let uuid = "";
   // Before checking token, look in TARGET_DIR/public for the uuid
   try {
     await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
-    return serveFile(req, TARGET_DIR + "/public/" + filename);
+    const response = await serveFile(req, TARGET_DIR + "/public/" + filename);
+
+    /* Check if burnable, delete file if so */
+    if (SQLiteService.isBurnable(filename)) {
+      await Deno.remove(`${TARGET_DIR}/public/${filename}`);
+      SQLiteService.removeBurnable(filename);
+    }
+    return response;
   } catch (_err) {
     // File not found in  public/, continue with authentication
   }
@@ -584,7 +618,14 @@ get("/api/:uuid", async (req, _path, params) => {
   } catch (_err) {
     return new Response("Not Found", { status: 404 });
   }
-  return serveFile(req, TARGET_DIR + "/" + uuid + "/" + filename);
+  const response = serveFile(req, TARGET_DIR + "/" + uuid + "/" + filename);
+  /* Check if burnable, delete file if so */
+  if (SQLiteService.isBurnable(filename)) {
+    await Deno.remove(`${TARGET_DIR}/${uuid}/${filename}`);
+    SQLiteService.removeBurnable(filename);
+  }
+
+  return response;
 });
 
 /**

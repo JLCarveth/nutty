@@ -13,6 +13,7 @@ interface User {
   password: string;
 }
 let instance: SQLiteService | null = null;
+
 export class SQLiteService {
   static getInstance() {
     if (!instance) {
@@ -80,6 +81,42 @@ export class SQLiteService {
         hashed,
       ]);
       return uuid;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Inserts a new UUID into the burn_on_read database table
+   */
+  createBurnable(uuid: string) {
+    try {
+      db.exec("INSERT INTO burn_on_read (uuid) VALUES (?)", [uuid]);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Returns true if the burn_on_read table contains the given UUID */
+  isBurnable(uuid: string) {
+    try {
+      const stmt = db.prepare(`SELECT uuid FROM burn_on_read WHERE uuid = ?`);
+      const result = stmt.get(uuid);
+      stmt.finalize();
+      if (result === undefined) return false;
+      return true;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Remove a record from the burn_on_read table
+   */
+  removeBurnable(uuid: string) {
+    try {
+      db.exec(`DELETE FROM burn_on_read WHERE uuid = ?`, [uuid]);
     } catch (err) {
       throw err;
     }
