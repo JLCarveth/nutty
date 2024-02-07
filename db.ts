@@ -2,6 +2,7 @@
  * SQLiteService - Service wrapper for sqlite3
  */
 import { Database } from "https://deno.land/x/sqlite3@0.9.1/mod.ts";
+import { compare, generateToken, hash } from "./auth.ts";
 
 const DB_NAME = Deno.env.get("DB_NAME") || "users.db";
 const db = new Database(DB_NAME);
@@ -28,6 +29,9 @@ export class SQLiteService {
             email text unique not null,\
             password text not null)`,
       );
+
+      db.exec(`CREATE TABLE IF NOT EXISTS burn_on_read (\
+        uuid text primary key not null)`);
     } catch (err) {
       console.error("Error creating table", err);
       Deno.exit(1);
