@@ -98,7 +98,7 @@ get("/burn/:uuid", (req, _path, params) => {
   const data: LayoutData = {
     title: "Paste.ts",
     version,
-    content: Burn(`${DOMAIN}/burn/${filename}`),
+    content: Burn(`${DOMAIN}/paste/${filename}`),
     scripts: [
       '<script src="/js/login-check.js" type="module"></script>',
       '<script src="/js/burnable-clip.js" type="module"></script>',
@@ -424,19 +424,22 @@ post("/api/paste", async (req, _path, _params) => {
   let text;
 
   /* Add the UUID to the burn_on_read table if param set */
-  const queryParams = new URL(req.url).searchParams;
-  const burn = queryParams.get("burn");
-  if (burn) {
-    SQLiteService.createBurnable(filename);
-  }
+  let burn;
 
   if (contentType) {
     if (contentType.includes("application/x-www-form-urlencoded") && html) {
       const formData = await req.formData();
       text = formData.get("text") as string;
+      burn = formData.get("burn") as string;
     } else {
       text = await req.text();
+      const queryParams = new URL(req.url).searchParams;
+      burn = queryParams.get("burn");
     }
+  }
+  if (burn) {
+    console.log(`BURN`)
+    SQLiteService.createBurnable(filename);
   }
 
   const data = (new TextEncoder()).encode(text);
