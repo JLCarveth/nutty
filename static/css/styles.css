@@ -146,3 +146,17 @@ input.form-control {
   border: solid 1px #CCC;
   border-radius: 10px;
 }
+
+.button {
+  padding: 1rem;
+  border: solid 1px #ccc;
+  border-radius: 10px;
+  font-family: 'Montserrat';
+}
+
+.info {
+    border: solid 1px #ccc;
+    padding: 2rem;
+    border-radius: 10px;
+    background: #fff8ee;
+}
