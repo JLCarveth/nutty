@@ -8,6 +8,8 @@ Nutty is a self-hostable paste server, allowing you to easily upload and share t
 - A simple Web interface (WIP)
 - Public and private pastes
 - [Low memory footprint](https://github.com/JLCarveth/nutty/assets/23156861/b449813a-719a-4c9b-8922-f91f70101b1d)
+- Burn-on-read - Pastes that can only be read once
+- Automatic Syntax Highlighting
 
 ## Installation
 
@@ -28,8 +30,8 @@ User=jlcarveth
 Group=jlcarveth
 WorkingDirectory=/opt/paste
 EnvironmentFile=/opt/paste/.env
-StandardOutput=/var/log/paste/out.log
-StandardError=/var/log/paste/error.log
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
@@ -44,7 +46,7 @@ Nutty depends on a couple of environment variables to be established before runn
 |`PORT`|The port to listen to. Default is 5335|`5335`|
 |`PUBLIC_PASTES`|Whether to allow users to create pastes without an access token.|1,0,true,false|
 |`DEBUG`|Logs incoming requests for debugging purposes.|1,0,true,false|
-|`DOMAIN`|The domain used for the HTTP cookie|`paste.jlcarveth.dev`|
+|`DOMAIN`|The domain used for the HTTP cookie, as well as the burn URLs. |`paste.jlcarveth.dev`|
 
 ## Usage
 There is a simple client bash script which provides a simple example of using Nutty.
