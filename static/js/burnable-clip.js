@@ -1,18 +1,10 @@
+const url = document.getElementById("url");
 const button = document.getElementById("copy");
-const codeBlock = document.getElementById("code-block");
 
 button.onclick = async (event) => {
   event.preventDefault();
-  console.log(`Click!`);
   try {
-    let textToCopy = codeBlock.textContent;
-    if (textToCopy.endsWith(button.innerText)) {
-      textToCopy = textToCopy.slice(0, -button.innerText.length);
-    }
-    await navigator.clipboard.writeText(textToCopy);
-    console.log(
-      codeBlock.innerText.length + " characters copied to clipboard.",
-    );
+    await navigator.clipboard.writeText(url.textContent);
 
     /* Briefly set the button text to indicate text was copied */
     const buttonText = button.innerText;

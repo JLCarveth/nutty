@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 1.9.3
+ * @version 1.10.0
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -18,7 +18,8 @@ import {
   SEP,
 } from "https://deno.land/std@0.202.0/path/mod.ts";
 import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
-import { SQLiteService as service, verify } from "./auth.ts";
+import { verify } from "./auth.ts";
+import { SQLiteService as service } from "./db.ts";
 import { highlightText } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/index.js";
 import { detectLanguage } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/detect.js";
 
@@ -27,15 +28,17 @@ import { Index } from "./templates/index.ts";
 import { Login } from "./templates/login.ts";
 import { Register } from "./templates/register.ts";
 import { _404 } from "./templates/404.ts";
+import { Burn } from "./templates/burn.ts";
 
 const SQLiteService = service.getInstance();
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
 const BASE_URL = Deno.env.get("BASE_URL");
 const PUBLIC_PASTES = Deno.env.get("PUBLIC_PASTES") || false;
 const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
+const DOMAIN = Deno.env.get("DOMAIN");
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.9.3";
+export const version = "1.10.0";
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -88,10 +91,31 @@ get("/register", () => {
   });
 });
 
+get("/burn/:uuid", (req, _path, params) => {
+  const filename = params?.uuid;
+  if (!filename) return new Response("Bad Request", { status: 400 });
+
+  const data: LayoutData = {
+    title: "Paste.ts",
+    version,
+    content: Burn(`${DOMAIN}/paste/${filename}`),
+    scripts: [
+      '<script src="/js/login-check.js" type="module"></script>',
+      '<script src="/js/burnable-clip.js" type="module"></script>',
+    ],
+  };
+
+  return new Response(Layout(data), {
+    headers: { "Content-Type": "text/html" },
+  });
+});
+
 get("/paste/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
   const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
+
+  if (!filename) return new Response("Bad Request", { status: 400 });
 
   /* Before checking token, see if a public paste w/ this UUID exists */
   if (PUBLIC_PASTES) {
@@ -112,6 +136,12 @@ get("/paste/:uuid", async (req, _path, params) => {
           '<script src="/js/clipboard.js" type="module"></script>',
         ],
       };
+
+      /* Check if burnable, delete file if so */
+      if (SQLiteService.isBurnable(filename)) {
+        await Deno.remove(`${TARGET_DIR}/public/${filename}`);
+        SQLiteService.removeBurnable(filename);
+      }
 
       return new Response(Layout(data), {
         headers: { "Content-Type": "text/html" },
@@ -150,6 +180,11 @@ get("/paste/:uuid", async (req, _path, params) => {
       stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
       scripts: ['<script src="/js/login-check.js" type="module"></script>'],
     };
+    /* Check if burnable, delete file if so */
+    if (SQLiteService.isBurnable(filename)) {
+      await Deno.remove(`${TARGET_DIR}/${uuid}/${filename}`);
+      SQLiteService.removeBurnable(filename);
+    }
 
     return new Response(Layout(data), {
       headers: { "Content-Type": "text/html" },
@@ -388,13 +423,23 @@ post("/api/paste", async (req, _path, _params) => {
 
   let text;
 
+  /* Add the UUID to the burn_on_read table if param set */
+  let burn;
+
   if (contentType) {
     if (contentType.includes("application/x-www-form-urlencoded") && html) {
       const formData = await req.formData();
       text = formData.get("text") as string;
+      burn = formData.get("burn") as string;
     } else {
       text = await req.text();
+      const queryParams = new URL(req.url).searchParams;
+      burn = queryParams.get("burn");
     }
+  }
+  if (burn) {
+    console.log(`BURN`)
+    SQLiteService.createBurnable(filename);
   }
 
   const data = (new TextEncoder()).encode(text);
@@ -412,7 +457,9 @@ post("/api/paste", async (req, _path, _params) => {
       if (accepts !== null && accepts.includes("text/html")) {
         return new Response(null, {
           status: 302,
-          headers: { "Location": `/api/${filename}` },
+          headers: {
+            "Location": (burn ? `/burn/${filename}` : `/paste/${filename}`),
+          },
         });
       }
       return new Response(filename);
@@ -433,7 +480,9 @@ post("/api/paste", async (req, _path, _params) => {
   if (accepts !== null && accepts.includes("text/html")) {
     return new Response(null, {
       status: 302,
-      headers: { "Location": `/api/${filename}` },
+      headers: {
+        "Location": (burn ? `/burn/${filename}` : `/paste/${filename}`),
+      },
     });
   }
   return new Response(filename);
@@ -563,11 +612,21 @@ get("/api/:uuid", async (req, _path, params) => {
   const filename = params?.uuid;
   const cookie = getCookieValue(req.headers.get("Cookie") ?? "", "token");
   const token = req.headers.get("X-Access-Token") || cookie;
+
+  if (!filename) return new Response("Bad Request", { status: 400 });
+
   let uuid = "";
   // Before checking token, look in TARGET_DIR/public for the uuid
   try {
     await Deno.lstat(`${TARGET_DIR}/public/${filename}`);
-    return serveFile(req, TARGET_DIR + "/public/" + filename);
+    const response = await serveFile(req, TARGET_DIR + "/public/" + filename);
+
+    /* Check if burnable, delete file if so */
+    if (SQLiteService.isBurnable(filename)) {
+      await Deno.remove(`${TARGET_DIR}/public/${filename}`);
+      SQLiteService.removeBurnable(filename);
+    }
+    return response;
   } catch (_err) {
     // File not found in  public/, continue with authentication
   }
@@ -583,7 +642,14 @@ get("/api/:uuid", async (req, _path, params) => {
   } catch (_err) {
     return new Response("Not Found", { status: 404 });
   }
-  return serveFile(req, TARGET_DIR + "/" + uuid + "/" + filename);
+  const response = serveFile(req, TARGET_DIR + "/" + uuid + "/" + filename);
+  /* Check if burnable, delete file if so */
+  if (SQLiteService.isBurnable(filename)) {
+    await Deno.remove(`${TARGET_DIR}/${uuid}/${filename}`);
+    SQLiteService.removeBurnable(filename);
+  }
+
+  return response;
 });
 
 /**
