@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 1.10.0
+ * @version 1.11.0
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -29,6 +29,7 @@ import { Login } from "./templates/login.ts";
 import { Register } from "./templates/register.ts";
 import { _404 } from "./templates/404.ts";
 import { Burn } from "./templates/burn.ts";
+import { About } from "./templates/about.ts";
 
 const SQLiteService = service.getInstance();
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
@@ -38,7 +39,7 @@ const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 const DOMAIN = Deno.env.get("DOMAIN");
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.10.0";
+export const version = "1.11.0";
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -66,9 +67,26 @@ function serveIndex() {
   });
 }
 
+function serveAbout() {
+  const data: LayoutData = {
+    title: "About Paste.ts",
+    content: About(),
+    version,
+    stylesheets: [`<link rel="stylesheet" href="/css/about.css"/>`],
+    scripts: [
+      `<script src="/js/login-check.js" type="module"></script>`,
+    ],
+  };
+
+  return new Response(Layout(data), {
+    headers: { "Content-Type": "text/html" },
+  });
+}
+
 /* Serve HTML webpages */
 get("/index.html", serveIndex);
 get("/", serveIndex);
+get("/about", serveAbout);
 get("/login", () => {
   const data: LayoutData = {
     title: "Paste.ts",
@@ -438,7 +456,7 @@ post("/api/paste", async (req, _path, _params) => {
     }
   }
   if (burn) {
-    console.log(`BURN`)
+    console.log(`BURN`);
     SQLiteService.createBurnable(filename);
   }
 
