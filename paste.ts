@@ -29,6 +29,7 @@ import { Login } from "./templates/login.ts";
 import { Register } from "./templates/register.ts";
 import { _404 } from "./templates/404.ts";
 import { Burn } from "./templates/burn.ts";
+import { About } from "./templates/about.ts";
 
 const SQLiteService = service.getInstance();
 const TARGET_DIR = Deno.env.get("TARGET_DIR") || "/opt/paste/";
@@ -66,9 +67,26 @@ function serveIndex() {
   });
 }
 
+function serveAbout() {
+  const data: LayoutData = {
+    title: "About Paste.ts",
+    content: About(),
+    version,
+    stylesheets: [`<link rel="stylesheet" href="/css/about.css"/>`],
+    scripts: [
+      `<script src="/js/login-check.js" type="module"></script>`,
+    ],
+  };
+
+  return new Response(Layout(data), {
+    headers: { "Content-Type": "text/html" },
+  });
+}
+
 /* Serve HTML webpages */
 get("/index.html", serveIndex);
 get("/", serveIndex);
+get("/about", serveAbout);
 get("/login", () => {
   const data: LayoutData = {
     title: "Paste.ts",
@@ -438,7 +456,7 @@ post("/api/paste", async (req, _path, _params) => {
     }
   }
   if (burn) {
-    console.log(`BURN`)
+    console.log(`BURN`);
     SQLiteService.createBurnable(filename);
   }
 

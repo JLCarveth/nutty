@@ -1,5 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,500;1,800&family=Open+Sans&family=Roboto+Condensed&display=swap');
 
+:root {
+  --primary-bg: #304C89;
+  --accent-text: #F5E0B7;
+}
+
 body {
   padding: 0;
   margin: 0;
@@ -16,7 +21,7 @@ main {
 }
 
 .navbar {
-  background-color: #00F;
+  background-color: var(--primary-bg);
   overflow: hidden;
   top: 0;
   width: 100%;
@@ -28,7 +33,7 @@ main {
 .navbar a {
   float: left;
   display: block;
-  color: #f2f2f2;
+  color: var(--accent-text);
   padding: 14px 16px;
   text-decoration: none;
   font-family: 'Montserrat';
@@ -36,9 +41,21 @@ main {
   font-style: italic;
 }
 
+.navbar a:visited {
+  color: var(--accent-text);
+}
+
 .navbar a:hover {
   background-color: #ddd;
   color: black;
+}
+
+a {
+  color: #00A9A5;
+}
+
+a:visited {
+  color: #082D0F;
 }
 
 .right-side {
@@ -54,11 +71,11 @@ main {
 p.version {
   float: right;
   padding: 14px 16px;
-  color: #f2f2f2;
+  color: var(--accent-text);
 }
 
 textarea {
-  width: 100%;
+  width: 98%;
   padding: 10px;
   margin-bottom: 10px;
   font-family: 'Open Sans', sans-serif;
@@ -68,7 +85,7 @@ input[type="submit"], input[type="reset"] {
   padding: 10px 30px;
   margin-right: 10px;
   border: none;
-  background-color: #00F;
+  background-color: var(--primary-bg);
   color: white;
   border-radius: 4px;
   font-family: 'Montserrat', sans-serif;
@@ -83,21 +100,32 @@ footer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #00F;
-  color: white;
+  background-color: var(--primary-bg);
+  color: var(--accent-text);
   bottom: 0;
   width: 100%;
 }
 
+ul {
+  line-height: 2;
+}
+
 ul.footer-links {
+  line-height: 1;
   text-align: center;
   list-style-type: none;
-  color: white;
+  color: var(--accent-text);
+}
+
+ul.footer-links li {
+  float: left;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 ul.footer-links a {
   text-decoration: none;
-  color: white;
+  color: var(--accent-text);
 }
 
 div.middle {
@@ -122,7 +150,7 @@ input.form-control {
   padding: 1rem;
   border: solid 1px #FF5C3A;
   background: #FF8C74;
-  color: white;
+  color: var(--accent-text);
   border-radius: 10px;
   margin-bottom: 2rem;
 }

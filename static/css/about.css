@@ -1,0 +1,11 @@
+body {
+  line-height: 1.6;
+}
+
+h2, h3 {
+  color: #333;
+}
+
+section {
+  margin-bottom: 30px;
+}
