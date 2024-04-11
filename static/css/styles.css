@@ -188,3 +188,45 @@ input.form-control {
     border-radius: 10px;
     background: #fff8ee;
 }
+
+#recent-posts {
+  box-shadow: 8px 14px 38px rgba(39, 44, 49, 0.06), 1px 3px 8px rgba(39, 44, 49, 0.03);
+  padding: 1rem;
+  margin-top: 2rem;
+  background: white; /* Adds a white background */
+  border-radius: 10px; /* Rounds the corners of the container */
+  max-width: 600px; /* Sets a max-width for better layout */
+  margin: 2rem auto; /* Centers the block on the page */
+}
+
+#recent-posts h1 {
+  color: #333; /* Darker color for the title for better readability */
+  font-size: 24px; /* Larger font size for the title */
+  text-align: center; /* Centers the title */
+  margin-bottom: 20px; /* Adds space below the title */
+}
+
+#recent-posts ul {
+  list-style: none; /* Removes default list styling */
+  padding: 0; /* Removes default padding */
+}
+
+#recent-posts li {
+  transition: all 0.5s ease;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  padding: 10px; /* Adds padding inside each list item */
+}
+
+#recent-posts li:hover {
+  background: #e5e7eb;
+}
+
+#recent-posts a {
+  text-decoration: none;
+  color: #1a202c; /* Sets the link color to a dark shade */
+  display: block; /* Makes the link fill the entire list item */
+  width: 100%;
+}
+

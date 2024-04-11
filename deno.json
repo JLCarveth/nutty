@@ -1,6 +1,6 @@
 {
   "tasks" : {
-    "start" : "deno run -A --unstable paste.ts",
+    "start" : "deno run -A --unstable-ffi paste.ts",
     "test" : "bash runtests.sh"
   }
 }
