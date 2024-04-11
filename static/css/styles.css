@@ -9,6 +9,9 @@ body {
   padding: 0;
   margin: 0;
   font-family: 'Open Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 main {
@@ -16,8 +19,9 @@ main {
   padding-left: 2rem;
   padding-right: 2rem;
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  flex-direction: row;
+  gap: 20px;
+  flex: 1;
 }
 
 .navbar {
@@ -79,6 +83,9 @@ textarea {
   padding: 10px;
   margin-bottom: 10px;
   font-family: 'Open Sans', sans-serif;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 8px 14px 38px rgba(39, 44, 49, 0.06), 1px 3px 8px rgba(39, 44, 49, 0.03);
 }
 
 input[type="submit"], input[type="reset"] {
@@ -102,8 +109,8 @@ footer {
   align-items: center;
   background-color: var(--primary-bg);
   color: var(--accent-text);
-  bottom: 0;
   width: 100%;
+  margin-top: auto;
 }
 
 ul {
@@ -145,6 +152,10 @@ input.form-control {
   margin-bottom: 10px;
   width: 100%;
 }
+
+form {
+  flex: 4;
+}
  
 .alert {
   padding: 1rem;
@@ -163,6 +174,7 @@ input.form-control {
   border-radius: 20px;
   box-shadow: 0px 10px 10px 2px rgba(0,0,0,0.72);
   position: relative;
+  flex-grow: 1;
 }
 
 .copy {
@@ -192,11 +204,10 @@ input.form-control {
 #recent-posts {
   box-shadow: 8px 14px 38px rgba(39, 44, 49, 0.06), 1px 3px 8px rgba(39, 44, 49, 0.03);
   padding: 1rem;
-  margin-top: 2rem;
   background: white; /* Adds a white background */
-  border-radius: 10px; /* Rounds the corners of the container */
+  border-radius: 15px; /* Rounds the corners of the container */
   max-width: 600px; /* Sets a max-width for better layout */
-  margin: 2rem auto; /* Centers the block on the page */
+  flex: 1;
 }
 
 #recent-posts h1 {
@@ -230,3 +241,9 @@ input.form-control {
   width: 100%;
 }
 
+
+@media screen and (max-width: 768px) {
+  main {
+    flex-direction: column;
+  }
+}
