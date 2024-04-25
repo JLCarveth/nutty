@@ -10,11 +10,11 @@ fi
 export DB_NAME="test.db"
 
 # Start the paste service
-$deno_path run -A --unstable paste.ts &
-paste_pid=$(ps aux | grep "$deno_path run -A --unstable paste.ts" | grep -v grep | awk '{print $2}')
+$deno_path run -A --unstable-ffi paste.ts &
+paste_pid=$(ps aux | grep "$deno_path run -A --unstable-ffi paste.ts" | grep -v grep | awk '{print $2}')
 
 # Run tests
-$deno_path test -A --unstable
+$deno_path test -A --unstable-ffi
 
 # Cleanup testing environment
 kill $paste_pid
