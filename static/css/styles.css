@@ -216,6 +216,15 @@ button {
   }
 }
 
+.buttons {
+  display: flex;
+
+  button {
+    width: 100%;
+    margin: 10px;
+  }
+}
+
 
 .info {
   border: solid 1px #ccc;
