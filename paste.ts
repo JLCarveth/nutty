@@ -2,7 +2,7 @@
  * A Pastebin-like backend using Zippy
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
- * @version 1.12.2
+ * @version 1.12.3
  * @namespace nutty
  *
  * Provides basic authentication via /api/login and /api/register routes.
@@ -39,7 +39,7 @@ const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 const DOMAIN = Deno.env.get("DOMAIN");
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.12.2";
+export const version = "1.12.3";
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -60,6 +60,7 @@ function serveIndex() {
     scripts: [
       `<script src="/js/login-check.js" type="module"></script>`,
       `<script src="/js/recent-posts.js" type="module"></script>`,
+      `<script defer data-domain="paste.jlcarveth.dev" src="https://stats.jlcarveth.dev/js/script.js"></script>`
     ],
   };
   return new Response(Layout(data), {
