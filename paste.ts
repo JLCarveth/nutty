@@ -60,7 +60,7 @@ function serveIndex() {
     scripts: [
       `<script src="/js/login-check.js" type="module"></script>`,
       `<script src="/js/recent-posts.js" type="module"></script>`,
-      `<script defer data-domain="paste.jlcarveth.dev" src="https://stats.jlcarveth.dev/js/script.js"></script>`
+      `<script defer data-domain="paste.jlcarveth.dev" src="https://stats.jlcarveth.dev/js/script.js"></script>`,
     ],
   };
   return new Response(Layout(data), {
@@ -76,6 +76,7 @@ function serveAbout() {
     stylesheets: [`<link rel="stylesheet" href="/css/about.css"/>`],
     scripts: [
       `<script src="/js/login-check.js" type="module"></script>`,
+      `<script defer data-domain="paste.jlcarveth.dev" src="https://stats.jlcarveth.dev/js/script.js"></script>`,
     ],
   };
 
@@ -93,6 +94,9 @@ get("/login", () => {
     title: "Paste.ts",
     content: Login(),
     version,
+    scripts: [
+      `<script defer data-domain="paste.jlcarveth.dev" src="https://stats.jlcarveth.dev/js/script.js"></script>`,
+    ],
   };
   return new Response(Layout(data), {
     headers: { "Content-Type": "text/html" },
@@ -103,6 +107,9 @@ get("/register", () => {
     title: "Paste.ts",
     content: Register(),
     version,
+    scripts: [
+      `<script defer data-domain="paste.jlcarveth.dev" src="https://stats.jlcarveth.dev/js/script.js"></script>`,
+    ],
   };
 
   return new Response(Layout(data), {
@@ -121,6 +128,7 @@ get("/burn/:uuid", (req, _path, params) => {
     scripts: [
       '<script src="/js/login-check.js" type="module"></script>',
       '<script src="/js/burnable-clip.js" type="module"></script>',
+      `<script defer data-domain="paste.jlcarveth.dev" src="https://stats.jlcarveth.dev/js/script.js"></script>`,
     ],
   };
 
@@ -155,6 +163,7 @@ get("/paste/:uuid", async (req, _path, params) => {
         scripts: [
           '<script src="/js/login-check.js" type="module"></script>',
           '<script src="/js/clipboard.js" type="module"></script>',
+          `<script defer data-domain="paste.jlcarveth.dev" src="https://stats.jlcarveth.dev/js/script.js"></script>`,
         ],
       };
 
@@ -199,7 +208,10 @@ get("/paste/:uuid", async (req, _path, params) => {
         `<div class="code-block"><pre><code>${highlighted}</code></pre><button class="copy">Copy to Clipboard</button></div>`,
       version,
       stylesheets: ['<link rel="stylesheet" href="/css/highlight.css"/>'],
-      scripts: ['<script src="/js/login-check.js" type="module"></script>'],
+      scripts: [
+        '<script src="/js/login-check.js" type="module"></script>',
+        `<script defer data-domain="paste.jlcarveth.dev" src="https://stats.jlcarveth.dev/js/script.js"></script>`,
+      ],
     };
     /* Check if burnable, delete file if so */
     if (SQLiteService.isBurnable(filename)) {
