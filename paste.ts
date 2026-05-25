@@ -15,18 +15,19 @@ import { addRoute, get, listen, post } from "./server.ts";
 import {
   extname,
   resolve,
-  SEP,
-} from "https://deno.land/std@0.202.0/path/mod.ts";
-import { serveFile } from "https://deno.land/std@0.179.0/http/file_server.ts";
+  SEPARATOR,
+} from "@std/path";
+import { serveFile } from "@std/http/file-server";
 import { verify } from "./auth.ts";
 import { SQLiteService as service } from "./db.ts";
-import { highlightText } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/index.js";
-import { detectLanguage } from "https://deno.land/x/speed_highlight_js@v1.2.6/dist/detect.js";
+import { highlightText } from "@speed-highlight/core";
+import { detectLanguage } from "@speed-highlight/core/detect";
 
 import { Layout, LayoutData } from "./templates/layout.ts";
 import { Index } from "./templates/index.ts";
 import { Login } from "./templates/login.ts";
 import { Register } from "./templates/register.ts";
+import denoConfig from "./deno.json" with { type: "json" };
 import { _404 } from "./templates/404.ts";
 import { Burn } from "./templates/burn.ts";
 import { About } from "./templates/about.ts";
@@ -39,7 +40,7 @@ const MAX_SIZE = Number(Deno.env.get("MAX_SIZE")) || 1e6;
 const DOMAIN = Deno.env.get("DOMAIN");
 
 export const PORT = Number.parseInt(<string> Deno.env.get("PORT") ?? 5335);
-export const version = "1.12.2";
+export const version = denoConfig.version;
 
 function getCookieValue(cookieString: string, cookieName: string) {
   const cookies = cookieString.split("; ");
@@ -228,7 +229,7 @@ get("/css/*", async (_req, _path, params) => {
   const resolvedPath = resolve(Deno.cwd(), filepath);
 
   /* Ensure the requested file is contained within the static directory */
-  if (!resolvedPath.startsWith(`${Deno.cwd()}${SEP}static${SEP}css`)) {
+  if (!resolvedPath.startsWith(`${Deno.cwd()}${SEPARATOR}static${SEPARATOR}css`)) {
     return new Response("Bad Request", { status: 400 });
   }
 
@@ -266,7 +267,7 @@ get("/js/*", async (_req, _path, params) => {
   const resolvedPath = resolve(Deno.cwd(), filepath);
 
   /* Ensure the requested file is contained within the static directory */
-  if (!resolvedPath.startsWith(`${Deno.cwd()}${SEP}static${SEP}js`)) {
+  if (!resolvedPath.startsWith(`${Deno.cwd()}${SEPARATOR}static${SEPARATOR}js`)) {
     return new Response("Bad Request", { status: 400 });
   }
 

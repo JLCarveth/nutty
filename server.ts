@@ -30,12 +30,12 @@ async function serveHttp(conn: Deno.Conn) {
         const match = route.path.exec(requestEvent.request.url);
         const params = match?.pathname.groups;
         /* Pass off the request info, params to the registered handler */
-        const response = route.handler(
+        const response = await route.handler(
           requestEvent.request,
           route.path,
           params,
         );
-        requestEvent.respondWith(response);
+        await requestEvent.respondWith(response);
         break;
       }
     }
@@ -72,7 +72,7 @@ export function addRoute(path: string, action: string, handler: RouteHandler) {
  */
 export async function listen(port: number) {
   const listener = Deno.listen({ port: port });
-  if (DEBUG) console.log(`Now listening on localhost:${port}/`);
+  console.log(`Now listening on http://localhost:${port}/`);
   for await (const conn of listener) {
     serveHttp(conn);
   }

@@ -4,7 +4,7 @@ export function Register() {
   return `
 <div class="middle">
   <h2>Register</h2>
-  <form method="POST" action="${BASE_URL}/register">
+  <form method="POST" action="${BASE_URL}/api/register">
     <label for="email">Email</label>
     <input type="email" name="email" placeholder="john_d@mail.com" class="form-control"/>
     <label for="password">Password</label>

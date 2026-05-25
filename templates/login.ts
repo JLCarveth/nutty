@@ -6,7 +6,7 @@ export function Login() {
         Login failed, please try again.
       </div>
       <h2>Login</h2>
-      <form method="POST" action="${BASE_URL}/login">
+      <form method="POST" action="${BASE_URL}/api/login">
         <label for="email" class="form-label">Email</label>
         <input type="email" name="email" placeholder="janedoe@mail.com" class="form-control"/>
         <label for="password" class="form-label">Password</label>

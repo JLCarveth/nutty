@@ -9,7 +9,7 @@
 import {
   assert,
   assertEquals,
-} from "https://deno.land/std@0.209.0/assert/mod.ts";
+} from "@std/assert";
 import { verify } from "./auth.ts";
 
 const baseURL = Deno.env.get("BASE_URL");

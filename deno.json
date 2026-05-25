@@ -1,6 +1,16 @@
 {
-  "tasks" : {
-    "start" : "deno run -A --unstable-ffi paste.ts",
-    "test" : "bash runtests.sh"
+  "version": "1.12.2",
+  "tasks": {
+    "start": "deno run -A --unstable-ffi --watch=*.ts paste.ts",
+    "test": "bash runtests.sh"
+  },
+  "imports": {
+    "@db/sqlite": "jsr:@db/sqlite",
+    "@std/assert": "jsr:@std/assert",
+    "@std/http/file-server": "jsr:@std/http/file-server",
+    "@std/path": "jsr:@std/path",
+    "@zaubrik/djwt": "jsr:@zaubrik/djwt",
+    "@speed-highlight/core": "npm:@speed-highlight/core",
+    "@speed-highlight/core/detect": "npm:@speed-highlight/core/detect"
   }
 }

@@ -1,7 +1,7 @@
 /**
  * SQLiteService - Service wrapper for sqlite3
  */
-import { Database } from "https://deno.land/x/sqlite3@0.9.1/mod.ts";
+import { Database } from "@db/sqlite";
 import { compare, generateToken, hash } from "./auth.ts";
 
 const DB_NAME = Deno.env.get("DB_NAME") || "users.db";
