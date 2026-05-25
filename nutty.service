@@ -1,0 +1,15 @@
+[Unit]
+Description=Nutty Pastebin Service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/nutty
+ExecStart=/usr/local/bin/deno run -A --unstable-ffi /var/www/nutty/paste.ts
+Restart=on-failure
+RestartSec=5
+Environment=PORT=5335
+
+[Install]
+WantedBy=multi-user.target
