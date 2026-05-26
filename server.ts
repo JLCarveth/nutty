@@ -25,6 +25,7 @@ async function serveHttp(conn: Deno.Conn) {
     }
 
     /* Iterate through registered routes for a match */
+    let matched = false;
     for (const route of routes) {
       if (route.action === method && route.path.test(path)) {
         const match = route.path.exec(requestEvent.request.url);
@@ -36,8 +37,12 @@ async function serveHttp(conn: Deno.Conn) {
           params,
         );
         await requestEvent.respondWith(response);
+        matched = true;
         break;
       }
+    }
+    if (!matched) {
+      await requestEvent.respondWith(new Response("Not Found", { status: 404 }));
     }
   }
 }
