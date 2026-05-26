@@ -1,7 +1,5 @@
 /**
- * This test file is meant to be run by the bash script runtests.sh,
- * it is not meant to be run standalone using `deno test`, since these
- * are end-to-end tests and require the paste.ts service to be running.
+ * End-to-end tests for the nutty paste service.
  *
  * @author John L. Carveth <jlcarveth@gmail.com>
  * @date 2023-12-14
@@ -12,7 +10,31 @@ import {
 } from "@std/assert";
 import { verify } from "./auth.ts";
 
-const baseURL = Deno.env.get("BASE_URL");
+const baseURL = Deno.env.get("BASE_URL") ?? "http://localhost:5335";
+const TEST_DB = "test.db";
+
+// Spawn server if not already running externally
+const serverProcess = new Deno.Command(Deno.execPath(), {
+  args: ["run", "-A", "--unstable-ffi", "paste.ts"],
+  env: { ...Deno.env.toObject(), DB_NAME: TEST_DB, BASE_URL: baseURL },
+  stdout: "null",
+  stderr: "null",
+}).spawn();
+
+// Wait for server to accept connections
+for (let i = 0; i < 40; i++) {
+  try {
+    await fetch(baseURL);
+    break;
+  } catch {
+    await new Promise((r) => setTimeout(r, 250));
+  }
+}
+
+globalThis.addEventListener("unload", () => {
+  serverProcess.kill();
+  try { Deno.removeSync(TEST_DB); } catch { /* already gone */ }
+});
 
 const uuidRegex =
   /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
@@ -28,7 +50,7 @@ Deno.test("Simple Registration", async () => {
     password: "password",
   };
 
-  const resp = await fetch(`${baseURL}/register`, {
+  const resp = await fetch(`${baseURL}/api/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -54,7 +76,7 @@ Deno.test("Registration with taken email address", async () => {
     password: "password",
   };
 
-  const resp = await fetch(`${baseURL}/register`, {
+  const resp = await fetch(`${baseURL}/api/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -83,7 +105,7 @@ Deno.test("Simple login request", async () => {
     password: "password",
   };
 
-  const resp = await fetch(`${baseURL}/login`, {
+  const resp = await fetch(`${baseURL}/api/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -106,7 +128,7 @@ Deno.test("Invalid login credentials", async () => {
     password: "password",
   };
 
-  const resp = await fetch(`${baseURL}/login`, {
+  const resp = await fetch(`${baseURL}/api/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -136,7 +158,7 @@ Deno.test("Making a public paste", async () => {
   const PUBLIC = Deno.env.get("PUBLIC_PASTES");
   const body = "Hello, World!";
 
-  const response = await fetch(`${baseURL}/paste`, {
+  const response = await fetch(`${baseURL}/api/paste`, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
     body: body,
@@ -165,7 +187,7 @@ Deno.test("Making a public paste", async () => {
  * Test #6 - Validating an existing access token
  */
 Deno.test("Validating a token", async () => {
-  const resp = await fetch(`${baseURL}/auth/status`, {
+  const resp = await fetch(`${baseURL}/api/auth/status`, {
     headers: { "X-Access-Token": token },
   });
 
@@ -186,7 +208,7 @@ Deno.test("Validating a token", async () => {
  */
 Deno.test("Fetching user's pastes", async () => {
   /* Intially, route should return [] */
-  const resp = await fetch(`${baseURL}/paste`, {
+  const resp = await fetch(`${baseURL}/api/paste`, {
     headers: { "X-Access-Token": token },
   });
 
@@ -202,7 +224,7 @@ Deno.test("Fetching user's pastes", async () => {
   );
 
   /* Add a new paste */
-  const resp2 = await fetch(`${baseURL}/paste`, {
+  const resp2 = await fetch(`${baseURL}/api/paste`, {
     method: "POST",
     headers: { "Content-Type": "text/plain", "X-Access-Token" : token },
     body: "Hello, World!",
@@ -215,7 +237,7 @@ Deno.test("Fetching user's pastes", async () => {
   const uuid = await resp2.text();
 
   /* Ensure new paste is returned in array from GET-/api/paste */
-  const resp3 = await fetch(`${baseURL}/paste`, {
+  const resp3 = await fetch(`${baseURL}/api/paste`, {
     headers: { "X-Access-Token": token },
   });
 
