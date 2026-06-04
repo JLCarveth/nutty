@@ -1,11 +1,48 @@
 body {
-  line-height: 1.6;
+  line-height: 1.75;
+}
+
+main {
+  display: block;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 h2, h3 {
-  color: #333;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-0);
+}
+
+h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-top: 2.5rem;
+  margin-bottom: 0.25rem;
+}
+
+h2::before {
+  content: "// SECTION";
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  margin-top: 2rem;
 }
 
 section {
-  margin-bottom: 30px;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+section:last-child {
+  border-bottom: none;
 }
